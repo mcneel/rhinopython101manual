@@ -1,0 +1,36 @@
+Option Explicit
+
+Call MyFavouriteThings()
+Sub MyFavouriteThings()
+    Dim strPrompt, strAnswer
+    Dim arrThings()
+    Dim intCount, i
+    intCount = 0
+
+    Do
+        Select Case intCount
+            Case 0
+                strPrompt = "What is your most favourite thing?"
+            Case 1
+                strPrompt = "What is your second most favourite thing?"
+            Case 2
+                strPrompt = "What is your third most favourite thing?"
+            Case Else
+                strPrompt = "What is your " & (intCount+1) & "th most favourite thing?"
+        End Select
+
+        strAnswer = Rhino.GetString(strPrompt)
+        If IsNull(strAnswer) Then Exit Do
+        
+        ReDim Preserve arrThings(intCount)
+        arrThings(intCount) = strAnswer
+        intCount = intCount+1
+    Loop
+
+    If intCount = 0 Then Exit Sub
+
+    Call Rhino.Print("Your " & UBound(arrThings)+1 & " favourite things are:")
+    For i = 0 To UBound(arrThings)
+        Call Rhino.Print((i+1) & ". " & arrThings(i))
+    Next
+End Sub

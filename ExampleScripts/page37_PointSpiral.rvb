@@ -1,0 +1,20 @@
+Option Explicit
+
+Call PointSpiral()
+Sub PointSpiral()
+    Dim arrPoint(2)
+    Dim t, pi
+    pi = Rhino.Pi
+
+    'Call Rhino.EnableRedraw(False)
+    For t = -5 To 5 Step 0.025
+    
+        arrPoint(0) = t * Sin(5*t)
+        arrPoint(1) = t * Cos(5*t)
+        arrPoint(2) = t
+
+        Call Rhino.Print(Rhino.Pt2Str(arrPoint, 3))
+        Call Rhino.AddPoint(arrPoint)
+    Next
+    'Call Rhino.EnableRedraw(True)
+End Sub

@@ -1,0 +1,25 @@
+Dim dblMajorRadius, dblMinorRadius
+Dim intSides
+
+dblMajorRadius = Rhino.GetReal("Major radius", 10.0, 1.0, 1000.0)
+dblMinorRadius = Rhino.GetReal("Minor radius", 2.0, 0.1, 100.0)
+intSides = Rhino.GetInteger("Number of sides", 6, 3, 20)
+
+Dim strPoint1, strPoint2
+strPoint1 = " w" & dblMajorRadius & ",0,0"
+strPoint2 = " w" & (dblMajorRadius + dblMinorRadius) & ",0,0"
+
+Rhino.Command "_SelNone"
+Rhino.Command "_Polygon _NumSides=" & intSides & " w0,0,0" & strPoint1
+Rhino.Command "_SelLast"
+Rhino.Command "-_Properties _Object _Name Rail _Enter _Enter"
+Rhino.Command "_SelNone"
+Rhino.Command "_Polygon _NumSides=" & intSides & strPoint1 & strPoint2
+Rhino.Command "_SelLast"
+Rhino.Command "_Rotate3D w0,0,0 w1,0,0 90"
+Rhino.Command "-_Properties _Object _Name Profile _Enter _Enter"
+Rhino.Command "_SelNone"
+Rhino.Command "-_Sweep1 _SelName Rail _SelName Profile _Enter _Closed=Yes Enter"
+Rhino.Command "_SelName Rail"
+Rhino.Command "_SelName Profile"
+Rhino.Command "_Delete"

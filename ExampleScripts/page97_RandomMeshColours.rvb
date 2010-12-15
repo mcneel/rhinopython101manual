@@ -1,0 +1,19 @@
+﻿Option Explicit
+
+Call RandomMeshColours()
+Sub RandomMeshColours()
+	Dim idMesh : idMesh = Rhino.GetObject("Mesh to randomize", 32, True, True)
+	If IsNull(idMesh) Then Exit Sub
+	
+	Dim V : V = Rhino.MeshVertices(idMesh)
+	Dim F : F = Rhino.MeshFaceVertices(idMesh)
+	Dim C() : ReDim C(UBound(V))
+	
+	Dim i
+	For i = 0 To UBound(V)
+		C(i) = RGB(Rnd*255, Rnd*255, Rnd*255)
+	Next
+	
+	Call Rhino.AddMesh(V, F, , , C)
+	Call Rhino.DeleteObject(idMesh)
+End Sub

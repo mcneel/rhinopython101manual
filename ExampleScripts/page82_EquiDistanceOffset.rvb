@@ -1,0 +1,70 @@
+Option Explicit
+
+Call EquiDistanceOffset()
+Sub EquiDistanceOffset()
+	Dim idSrf : idSrf = Rhino.GetObject("Pick surface to offset", 8, True, True)
+	If IsNull(idSrf) Then Exit Sub
+	
+	Dim dblOffset : dblOffset = Rhino.GetReal("Offset distance", 1.0, 0.0)
+	If IsNull(dblOffset) Then Exit Sub
+	
+	Dim uDomain : uDomain = Rhino.SurfaceDomain(idSrf, 0)
+	Dim u, uStep : uStep = (uDomain(1) - uDomain(0)) / 200
+	Dim t, arrOffsetVertices(), VertexCount 
+	Dim idIsoCurves
+	
+	VertexCount = -1
+	Call Rhino.EnableRedraw(False)
+	
+	For u = uDomain(0) To uDomain(1) + (0.5*uStep) Step uStep
+		idIsoCurves = Rhino.ExtractIsoCurve(idSrf, Array(u, 0), 1)
+		
+		If Not IsNull(idIsoCurves) Then
+			t = BSearchCurve(idIsoCurves(0), dblOffset, 0.001)
+			
+			If Not IsNull(t) Then
+				VertexCount = VertexCount+1
+				ReDim Preserve arrOffsetVertices(VertexCount)
+				arrOffsetVertices(VertexCount) = Rhino.EvaluateCurve(idIsoCurves(0), t) 	
+			End If
+					
+			Call Rhino.DeleteObjects(idIsoCurves)	
+		End If
+	Next
+	
+	If VertexCount > 0 Then
+		Call Rhino.AddInterpCrvOnSrf(idSrf, arrOffsetVertices)	
+	End If
+	
+	Call Rhino.EnableRedraw(True)
+End Sub
+
+Function BSearchCurve(ByVal idCrv, ByVal Length, ByVal Tolerance)
+	BSearchCurve = Null
+
+	Dim Lcrv : Lcrv = Rhino.CurveLength(idCrv)
+	If Lcrv < Length Then Exit Function
+	
+	Dim tmin : tmin = Rhino.CurveDomain(idCrv)(0)
+	Dim tmax : tmax = Rhino.CurveDomain(idCrv)(1)
+		
+	Dim t0, t1, t
+	t0 = tmin
+	t1 = tmax
+	
+	Dim Ltmp	
+	Do
+		t = 0.5*(t1+t0)
+		
+		Ltmp = Rhino.CurveLength(idCrv, , Array(tmin, t))
+		If Abs(Ltmp - Length) < Tolerance Then Exit Do
+		
+		If Ltmp < Length Then
+			t0 = t
+		Else
+			t1 = t
+		End If
+	Loop
+	
+	BSearchCurve = t
+End Function

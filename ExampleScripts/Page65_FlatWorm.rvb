@@ -1,0 +1,47 @@
+Call FlatWorm()
+Sub FlatWorm()
+    Dim crvObject : crvObject = Rhino.GetObject("Pick a backbone curve", 4, True, False)
+    If IsNull(crvObject) Then Exit Sub
+
+    Dim intSamples : intSamples = Rhino.GetInteger("Number of cross sections", 100, 5)
+    If IsNull(intSamples) Then Exit Sub
+
+    Dim dblBendRadius : dblBendRadius = Rhino.GetReal("Bend plane radius", 0.5, 0.001)
+    If IsNull(dblBendRadius) Then Exit Sub
+
+    Dim dblPerpRadius : dblPerpRadius = Rhino.GetReal("Ribbon plane radius", 2.0, 0.001)
+    If IsNull(dblPerpRadius) Then Exit Sub
+
+    Dim crvDomain : crvDomain = Rhino.CurveDomain(crvObject)
+    Dim t, N
+
+    Dim arrCrossSections(), CrossSectionPlane
+    Dim crvCurvature, crvPoint, crvTangent, crvPerp, crvNormal
+    
+    N = -1
+    For t = crvDomain(0) To crvDomain(1) + 1e-9 Step (crvDomain(1)-crvDomain(0))/intSamples
+        N = N+1
+        crvCurvature = Rhino.CurveCurvature(crvObject, t)
+        If IsNull(crvCurvature) Then
+            crvPoint = Rhino.EvaluateCurve(crvObject, t)
+            crvTangent = Rhino.CurveTangent(crvObject, t)
+            crvPerp = Array(0,0,1)
+            crvNormal = Rhino.VectorCrossProduct(crvTangent, crvPerp)
+        Else
+            crvPoint = crvCurvature(0)
+            crvTangent = crvCurvature(1)
+            crvPerp = Rhino.VectorUnitize(crvCurvature(4))
+            crvNormal = Rhino.VectorCrossProduct(crvTangent, crvPerp)
+        End If
+        
+        CrossSectionPlane = Rhino.PlaneFromFrame(crvPoint, crvPerp, crvNormal)
+        
+        ReDim Preserve arrCrossSections(N)
+        arrCrossSections(N) = Rhino.AddEllipse(CrossSectionPlane, dblBendRadius, dblPerpRadius)
+    Next
+
+    If N < 1 Then Exit Sub
+    
+    Call Rhino.AddLoftSrf(arrCrossSections)
+    Call Rhino.DeleteObjects(arrCrossSections)
+End Sub

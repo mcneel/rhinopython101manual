@@ -1,0 +1,57 @@
+Option Explicit
+
+Call IterativeShortenCurve()
+Sub IterativeShortenCurve()
+    Dim strCurveID : strCurveID = Rhino.GetObject("Open curve to smooth", 4, True)
+    If IsNull(strCurveID) Then Exit Sub
+    If Rhino.IsCurveClosed(strCurveID) Then Exit Sub
+    
+    Dim dblMin, dblMax, dblGoal
+    dblMin = Rhino.Distance(Rhino.CurveStartPoint(strCurveID), Rhino.CurveEndPoint(strCurveID))
+    dblMax = Rhino.CurveLength(strCurveID)
+    dblGoal = Rhino.GetReal("Goal length", 0.5*(dblMin + dblMax) , dblMin, dblMax)
+    If IsNull(dblGoal) Then Exit Sub
+    
+    Do Until Rhino.CurveLength(strCurveID) < dblGoal
+        Call Rhino.EnableRedraw(False)
+        strCurveID = SmoothCurve(strCurveID, 0.1)
+        If IsNull(strCurveID) Then Exit Do
+        Call Rhino.EnableRedraw(True)
+    Loop
+End Sub
+
+
+Function SmoothCurve(ByVal strCurveID, ByVal s)
+    Dim arrCP : arrCP = Rhino.CurvePoints(strCurveID)
+    Dim arrNewCP : arrNewCP = arrCP
+
+    Dim i
+    For i = 1 To UBound(arrCP) - 1
+        Dim Vm
+        Vm = SmoothingVector(arrCP(i), arrCP(i-1), arrCP(i+1), s)
+        arrNewCP(i) = Rhino.PointAdd(arrCP(i), Vm)
+    Next
+
+    Dim arrKnots : arrKnots = Rhino.CurveKnots(strCurveID)
+    Dim intDegree : intDegree = Rhino.CurveDegree(strCurveID)
+    Dim arrWeights: arrWeights = Rhino.CurveWeights(strCurveID)
+    
+    SmoothCurve = Rhino.AddNurbsCurve(arrNewCP, arrKnots, intDegree, arrWeights)
+    If IsNull(SmoothCurve) Then Exit Function
+    
+    Call Rhino.DeleteObject(strCurveID)
+End Function
+
+Function SmoothingVector(ByVal P, ByVal Pprev, ByVal Pnext, ByVal s)
+    Dim Pm(2), i
+    
+    For i = 0 To 2
+        Pm(i) = (Pprev(i) + Pnext(i)) / 2.0
+    Next
+    
+    Dim Va, Vm
+    Va = Rhino.VectorCreate(Pm, P)
+    Vm = Rhino.VectorScale(Va, s)
+    
+    SmoothingVector = Vm
+End Function

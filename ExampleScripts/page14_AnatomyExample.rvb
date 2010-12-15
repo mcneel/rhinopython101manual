@@ -1,0 +1,12 @@
+Option Explicit
+'Script written by David Rutten on 28-08-2006
+
+Public intCount
+
+Call Main()
+Sub Main()
+    Dim strInfo
+    strInfo = "This is just a test"
+    Rhino.Print strInfo
+    Rhino.Print "I repeat: " & strInfo
+End Sub

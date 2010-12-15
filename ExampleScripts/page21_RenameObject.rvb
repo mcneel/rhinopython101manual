@@ -1,0 +1,14 @@
+Option Explicit
+'This script will rename an object using the current system time
+
+Call RenameObject()
+Sub RenameObject()
+    Dim strObjectID
+    strObjectID = Rhino.GetObject("Select an object to rename", , , True)
+    If IsNull(strObjectID) Then Exit Sub
+
+    Dim strNewName
+    strNewName = "Date tag: " & CStr(Now())
+
+    Call Rhino.ObjectName(strObjectID, strNewName)
+End Sub

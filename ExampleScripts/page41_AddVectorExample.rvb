@@ -1,0 +1,47 @@
+Option Explicit
+'This script will compute a bunch of cross-product vector based on a pointcloud
+
+Call VectorField()
+Sub VectorField()
+    Dim strCloudID
+    strCloudID = Rhino.GetObject("Input pointcloud", 2, True, True)
+    If IsNull(strCloudID) Then Exit Sub
+
+    Dim arrPoints : arrPoints = Rhino.PointCloudPoints(strCloudID)
+    Dim ptBase : ptBase = Rhino.GetPoint("Vector field base point")
+    If IsNull(ptBase) Then Exit Sub
+    
+    Dim i
+    For i = 0 To UBound(arrPoints)
+        Dim vecBase
+        vecBase = Rhino.VectorCreate(arrPoints(i), ptBase)
+
+        Dim vecDir : vecDir = Rhino.VectorCrossProduct(vecBase, Array(0,0,1))
+
+        If Not IsNull(vecDir) Then
+            vecDir = Rhino.VectorUnitize(vecDir)
+            vecDir = Rhino.VectorScale(vecDir, 2.0)
+
+            Call AddVector(vecDir, arrPoints(i))
+        End If
+    Next
+End Sub
+
+Function AddVector(ByVal vecDir, ByVal ptBase)
+    On Error Resume Next
+    AddVector = Null
+
+    If IsNull(ptBase) Or Not IsArray(ptBase) Then
+        ptBase = Array(0,0,0)
+    End If
+
+    Dim ptTip
+    ptTip = Rhino.PointAdd(ptBase, vecDir)
+    If Not (Err.Number = 0) Then Exit Function
+
+    AddVector = Rhino.AddLine(ptBase, ptTip)
+    If Not (Err.Number = 0) Then Exit Function
+    If IsNull(AddVector) Then Exit Function
+
+    Call Rhino.CurveArrows(AddVector, 2)
+End Function

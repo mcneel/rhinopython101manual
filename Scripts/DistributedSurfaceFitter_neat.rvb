@@ -1,0 +1,129 @@
+﻿Option Explicit
+
+Call DistributedSurfaceFitter()
+Sub DistributedSurfaceFitter()
+	Dim idSrf : idSrf = Rhino.GetObject("Surface to fit", 8, True, True)
+	If IsNull(idSrf) Then Exit Sub
+	
+	Dim pts : pts = Rhino.GetPointCoordinates("Points to fit to", False)
+	If IsNull(pts) Then Exit Sub
+	
+	Dim N, nSrf
+	Dim dProx, dTrans
+
+	For N = 1 To 10000
+		Call Rhino.EnableRedraw(False)
+		nSrf = FitSurface(idSrf, pts, dTrans, dProx)
+		'Call Rhino.DeleteObject(idSrf)
+		Call Rhino.EnableRedraw(True)
+		
+		Call Rhino.Prompt("Translation = " & Round(dTrans, 2) & "  Deviation = " & Round(dProx, 2))
+
+		If (dTrans < 0.1) Or (dProx < 0.01) Then Exit For
+		idSrf = nSrf
+	Next
+	
+	Call Rhino.Print("Final deviation = " & Round(dProx, 4))
+End Sub
+
+Function FitSurface(ByVal idSrf, ByRef Samples(), ByRef dTranslation, ByRef dProximity)
+	Dim P : P = Rhino.SurfacePoints(idSrf) 
+	Dim G : G = Rhino.SurfaceEditPoints(idSrf, True, True)
+	Dim N : N = GrevilleNormals(idSrf)
+	Dim S : S = ConvertToUVW(idSrf, Samples)
+	
+	Dim Forces(), Factors()
+	Call InstantiateForceLists(Forces, Factors, UBound(P))
+
+	Dim i, j
+	Dim LocalDist, LocalFactor, LocalForce
+	
+	dProximity = 0.0
+	dTranslation = 0.0
+	
+	For i = 0 To UBound(S)
+		dProximity = dProximity + Abs(S(i)(2))
+		
+		For j = 0 To UBound(P)
+			LocalDist = (S(i)(0) - G(j)(0))^2 + (S(i)(1) - G(j)(1))^2
+			If (LocalDist < 0.01) Then LocalDist = 0.01
+			LocalFactor = 1 / LocalDist
+			
+			LocalForce = Rhino.VectorScale(N(j), LocalFactor * S(i)(2))
+		
+			Forces(j) = Rhino.VectorAdd(Forces(j), LocalForce)
+			Factors(j) = Factors(j) + LocalFactor
+		Next
+	Next
+	
+	Call DivideVectorArray(Forces, Factors)
+	
+	For i = 0 To UBound(P)
+		P(i) = Rhino.PointAdd(P(i), Forces(i))
+		dTranslation = dTranslation + Rhino.VectorLength(Forces(i))
+	Next
+	
+	Dim srf_N : srf_N = Rhino.SurfacePointCount(idSrf)
+	Dim srf_K : srf_K = Rhino.SurfaceKnots(idSrf)
+	Dim srf_W : srf_W = Rhino.SurfaceWeights(idSrf)
+	Dim srf_D(1)
+	srf_D(0) = Rhino.SurfaceDegree(idSrf, 0)
+	srf_D(1) = Rhino.SurfaceDegree(idSrf, 1)
+	
+	FitSurface = Rhino.AddNurbsSurface(srf_N, P, srf_K(0), srf_K(1), srf_D, srf_W)
+End Function
+
+Function ConvertToUVW(ByVal idSrf, ByRef pXYZ())
+	Dim pUVW() : ReDim pUVW(UBound(pXYZ))
+	
+	Dim Suv, Sxyz, Snormal
+	Dim Sdist, dirPos, dirNeg
+	Dim i
+	
+	For i = 0 To UBound(pXYZ)
+		Suv = Rhino.SurfaceClosestPoint(idSrf, pXYZ(i))	
+		Sxyz = Rhino.EvaluateSurface(idSrf, Suv)
+		Snormal = Rhino.SurfaceNormal(idSrf, Suv)
+		
+		dirPos = Rhino.PointAdd(Sxyz, Snormal)
+		dirNeg = Rhino.PointSubtract(Sxyz, Snormal)
+		
+		Sdist = Rhino.Distance(Sxyz, pXYZ(i))
+		
+		If (Rhino.Distance(pXYZ(i), dirPos) > Rhino.Distance(pXYZ(i), dirNeg)) Then
+			Sdist = -Sdist
+		End If
+
+		pUVW(i) = Array(Suv(0), Suv(1), Sdist)
+	Next
+	
+	ConvertToUVW = pUVW
+End Function
+
+Function GrevilleNormals(ByVal idSrf)
+	Dim uvGreville   : uvGreville = Rhino.SurfaceEditPoints(idSrf, True, True)
+	Dim srfNormals() : ReDim srfNormals(UBound(uvGreville))
+	
+	Dim i
+	For i = 0 To UBound(uvGreville)	
+		srfNormals(i) = Rhino.SurfaceNormal(idSrf, uvGreville(i))
+	Next
+	
+	GrevilleNormals = srfNormals
+End Function
+Sub InstantiateForceLists(ByRef Forces(), ByRef Factors(), ByVal Bound)
+	ReDim Forces(Bound)
+	ReDim Factors(Bound)
+	Dim i
+	
+	For i = 0 To Bound
+		Forces(i) = Array(0,0,0)
+		Factors(i) = 0.0
+	Next
+End Sub
+Sub DivideVectorArray(ByRef Vectors, ByRef Factors)
+	Dim i
+	For i = 0 To UBound(Vectors)
+		Vectors(i) = Rhino.VectorDivide(Vectors(i), Factors(i))
+	Next
+End Sub

@@ -1,0 +1,105 @@
+﻿Option Explicit
+'Script written by David Rutten
+'Script copyrighted by Robert McNeel & Associates
+'Script version Tuesday, December 18, 2007 00:12:12
+
+Call Main()
+Sub Main()
+	Dim idCrvA : idCrvA = GetCurveSeries("Pick ordered curves in first direction. Press Enter to complete.")
+	If (IsNull(idCrvA)) Then Exit Sub 'No curves were picked
+	If (UBound(idCrvA) < 1) Then Exit Sub 'Too few curves were picked
+	
+	Call Rhino.LockObjects(idCrvA) 'Prevent these curves from being picked again
+	
+	Dim idCrvB : idCrvB = GetCurveSeries("Pick ordered curves in second direction. Press Enter to complete.")
+	Call Rhino.UnlockObjects(idCrvA) 
+	
+	If (IsNull(idCrvB)) Then Exit Sub 'No curves were picked
+	If (UBound(idCrvB) < 1) Then Exit Sub 'Too few curves were picked
+	
+	'We now have a set of ordered curves in two directions, A & B:
+	' A =  0  1  2  3  4  5  6
+	'      │  │  │  │  │  │  │
+	'      │  │  │  │  │  │  │
+	'      │  │  │  │  │  │  │
+	'      │  │  │  │  │  │  │
+	'
+	' B = ─────────────────────0
+	'     ─────────────────────1
+	'     ─────────────────────2
+	'     ─────────────────────3
+	'     ─────────────────────4
+	'
+	'We need to intersect them 2 by 2, so we iterate over all 'intersection squares' 
+	'Each square of curves A, B, C, D gives us 4 intersection points: K, L, M, N
+	'      C      D
+	'      │      │
+	'      │      │
+	'  ────K──────L────A
+	'      │      │
+	'  ────M──────N────B
+	'      │      │
+	'      │      │
+	
+	
+	Dim i, j
+	Dim A, B, C, D
+	Dim K, L, M, N
+	
+	For i = 0 To UBound(idCrvA)-1
+		For j = 0 To Ubound(idCrvB)-1
+			A = idCrvA(i)
+			B = idCrvA(i+1)
+			C = idCrvB(j)
+			D = idCrvB(j+1)
+			
+			K = CCX(A, C)
+			L = CCX(A, D)
+			M = CCX(B, C)
+			N = CCX(B, D)
+			
+			If (IsNull(K) Or IsNull(L) Or IsNull(M) Or IsNull(N)) Then
+				'At least one intersection wasn't found, we have to skip this combination
+			Else
+				Call Rhino.AddSrfPt(Array(K, L, N))
+				Call Rhino.AddSrfPt(Array(K, N, M))
+			End If
+		Next
+	Next
+	
+End Sub
+
+'Asks the user to select a set of curves, one by one
+Function GetCurveSeries(ByVal sPrompt)
+	GetCurveSeries = Null
+	
+	Dim idCrv, idCurves(), i
+	Dim idDots()
+	
+	For i = 0 To 1000000 'Assume nobody will pick more than 1 million curves by hand
+		idCrv = Rhino.GetObject(sPrompt, 4, False, True)
+		If IsNull(idCrv) Then Exit For
+		
+		ReDim Preserve idDots(i)
+		idDots(i) = Rhino.AddTextDot(i+1, Rhino.CurveMidPoint(idCrv))
+		
+		ReDim Preserve idCurves(i)
+		idCurves(i) = idCrv
+	Next
+	
+	Call Rhino.DeleteObjects(idDots)
+	
+	If (i = 0) Then Exit Function
+	GetCurveSeries = idCurves 
+End Function
+
+'Shorthand function for curve curve intersction
+'Returns either NULL is curves do not intersect or just the first intersection point
+Function CCX(ByVal idCurve1, ByVal idCurve2)
+	CCX = Null
+	
+	Dim datX : datX = Rhino.CurveCurveIntersection(idCurve1, idCurve2)
+	If IsNull(datX) Then Exit Function
+	
+	CCX = datX(0,1)
+End Function

@@ -1,0 +1,49 @@
+Option Strict On
+
+'This script features an implementation of the ArcStartEndDir algorithm
+'The script is different from the version in the primer in that it adds 
+'linesegments when the Direction vector is parallel to A-B
+
+Call DrawArcSED()
+Sub DrawArcSED()
+    Dim ptA, ptB, ptD
+    Dim vecD
+    
+    ptA = Rhino.GetPoint("Start of arc")
+    If IsNull(ptA) Then Exit Sub
+    
+    ptB = Rhino.GetPoint("End of arc")
+    If IsNull(ptB) Then Exit Sub
+    
+    ptD = Rhino.GetPoint("Direction of arc at start", ptA)
+    If IsNull(ptD) Then Exit Sub
+    
+    vecD = Rhino.PointSubtract(ptD, ptA)
+    If Rhino.VectorLength(vecD) = 0.0 Then Exit Sub
+    
+    Call AddArcDir(ptA, ptB, vecD)
+End Sub
+
+Function AddArcDir(ByVal ptStart, ByVal ptEnd, ByVal vecDir)
+    AddArcDir = Null
+
+    Dim vecBase : vecBase = Rhino.PointSubtract(ptEnd, ptStart)
+    If Rhino.VectorLength(vecBase) = 0.0 Then Exit Function
+    
+    If Rhino.IsVectorParallelTo(vecBase, vecDir) Then
+        AddArcDir = Rhino.AddLine(ptStart, ptEnd)
+        Exit Function
+    End If
+
+    vecBase = Rhino.VectorUnitize(vecBase)
+    vecDir = Rhino.VectorUnitize(vecDir)
+
+    Dim vecBisector : vecBisector = Rhino.VectorAdd(vecDir, vecBase)
+    vecBisector = Rhino.VectorUnitize(vecBisector)
+    
+    Dim dotProd : dotProd = Rhino.VectorDotProduct(vecBisector, vecDir)
+    Dim midLength : midLength = (0.5 * Rhino.Distance(ptStart, ptEnd)) / dotProd
+    
+    vecBisector = Rhino.VectorScale(vecBisector, midLength)
+    AddArcDir = Rhino.AddArc3Pt(ptStart, ptEnd, Rhino.PointAdd(ptStart, vecBisector))
+End Function

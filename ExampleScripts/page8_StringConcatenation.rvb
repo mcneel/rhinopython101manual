@@ -1,0 +1,11 @@
+a = "Apfelstrudel"
+Rhino.Print a
+
+a = "Apfel" & "strudel"
+Rhino.Print a
+
+a = "4" & " " & "Apfelstrudel"
+Rhino.Print a
+
+a = "The square root of 2.0 = " & Sqr(2.0)
+Rhino.Print a

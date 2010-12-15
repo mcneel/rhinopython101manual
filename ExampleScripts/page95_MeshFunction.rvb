@@ -1,0 +1,143 @@
+﻿Option Explicit
+
+Call MeshFunction_XY()
+Sub MeshFunction_XY()
+	Dim zFunc, fDomain(3), iResolution
+	Call LoadFunctionData(zFunc, fDomain, iResolution)
+	
+	zFunc = Rhino.StringBox("Specify a function f(x,y[,D,A])", zFunc, "Mesh function")
+	If IsNull(zFunc) Then Exit Sub
+	
+	Dim strPrompt
+	Dim bResult
+	
+	Do
+		strPrompt = "Function domain x{" & fDomain(0) & ", " & fDomain(1) & "}" & _
+			"     y{" & fDomain(2) & ", " & fDomain(3) & "}" & _
+			"     @  " & iResolution
+		
+		bResult = Rhino.GetString(strPrompt, "Insert", split("xMin;xMax;yMin;yMax;Resolution;Insert", ";"))
+		If IsNull(bResult) Then Exit Sub
+		
+		Select Case UCase(bResult)
+			Case "XMIN"
+				bResult = Rhino.GetReal("X-Domain start", fDomain(0))
+				If Not IsNull(bResult) Then fdomain(0) = bResult
+			Case "XMAX"
+				bResult = Rhino.GetReal("X-Domain end", fDomain(1))
+				If Not IsNull(bResult) Then fdomain(1) = bResult
+			Case "YMIN"
+				bResult = Rhino.GetReal("Y-Domain start", fDomain(2))
+				If Not IsNull(bResult) Then fdomain(2) = bResult
+			Case "YMAX"
+				bResult = Rhino.GetReal("Y-Domain end", fDomain(3))
+				If Not IsNull(bResult) Then fdomain(3) = bResult
+			Case "RESOLUTION"
+				bResult = Rhino.GetInteger("Resolution of the graph", iResolution)
+				If Not IsNull(bResult) Then iResolution = bResult
+			Case "INSERT"
+				Exit Do 
+		End Select
+	Loop
+	
+	Dim V : V = CreateMeshVertices(zFunc, fDomain, iResolution)
+	Dim F : F = CreateMeshFaces(iResolution)
+	
+	Call Rhino.AddMesh(V, F)
+	Call SaveFunctionData(zFunc, fDomain, iResolution)
+End Sub
+
+Sub SaveFunctionData(ByVal strFunction, ByVal fDomain(), ByVal Resolution)
+	Dim iSettingFile : iSettingFile = Rhino.InstallFolder() & "MeshFunction_XY.ini"
+
+	Call Rhino.SaveSettings(iSettingFile, "Function", "format", strFunction)
+	Call Rhino.SaveSettings(iSettingFile, "Domain", "xMin", fDomain(0))
+	Call Rhino.SaveSettings(iSettingFile, "Domain", "xMax", fDomain(1))
+	Call Rhino.SaveSettings(iSettingFile, "Domain", "yMin", fDomain(2))
+	Call Rhino.SaveSettings(iSettingFile, "Domain", "yMax", fDomain(3))	
+	Call Rhino.SaveSettings(iSettingFile, "Domain", "Resolution", Resolution)
+End Sub
+Sub LoadFunctionData(ByRef strFunction, ByRef fDomain(), ByRef Resolution)
+	Dim iSettingFile : iSettingFile = Rhino.InstallFolder() & "MeshFunction_XY.ini"
+	
+	strFunction = Rhino.GetSettings(iSettingFile, "Function", "format") 
+	If IsNull(strFunction) Then 
+		strFunction = "Cos( Sqr(x^2 + y^2) )"
+		fDomain(0) = -10.0
+		fDomain(1) = +10.0
+		fDomain(2) = -10.0
+		fDomain(3) = +10.0
+		Resolution = 50
+		
+		Exit Sub
+	End If
+	
+	fDomain(0) = CDbl(Rhino.GetSettings(iSettingFile, "Domain", "xMin"))
+	fDomain(1) = CDbl(Rhino.GetSettings(iSettingFile, "Domain", "xMax"))
+	fDomain(2) = CDbl(Rhino.GetSettings(iSettingFile, "Domain", "yMin"))
+	fDomain(3) = CDbl(Rhino.GetSettings(iSettingFile, "Domain", "yMax"))
+	
+	Resolution = CInt(Rhino.GetSettings(iSettingFile, "Domain", "Resolution"))
+End Sub
+
+Function SolveEquation(ByVal strFunction, ByVal x, ByVal y)
+	Dim z
+	Dim D, A, AngleData
+	
+	D = Rhino.Hypot(x, y)
+	AngleData = Rhino.Angle(Array(0,0,0), Array(x,y,0))
+	If IsNull(AngleData) Then
+		A = 0.0
+	Else
+		A = Rhino.ToRadians(AngleData(0))
+	End If
+	
+	On Error Resume Next
+	Execute("z = " & strFunction)
+	
+	If err.Number = 0 Then
+		SolveEquation = z
+	Else
+		SolveEquation = 0.0
+	End If
+End Function
+
+Function CreateMeshVertices(ByVal strFunction, ByVal fDomain(), ByVal iResolution)
+	Dim xStep : xStep = (fDomain(1) - fDomain(0)) / iResolution
+	Dim yStep : yStep = (fDomain(3) - fDomain(2)) / iResolution
+	Dim V(), N
+	N = -1
+	
+	Dim x, y, z
+	For x = fDomain(0) To fDomain(1) + (0.5*xStep) Step xStep
+		For y = fDomain(2) To fDomain(3) + (0.5*yStep) Step yStep
+			z = SolveEquation(strFunction, x, y)
+			N = N+1
+			ReDim Preserve V(N)
+			V(N) = Array(x, y, z)
+		Next
+	Next
+	
+	CreateMeshVertices = V
+End Function
+Function CreateMeshFaces(ByVal iResolution)
+	Dim Nx : Nx = iResolution
+	Dim Ny : Ny = iResolution
+	
+	Dim F() : ReDim F(Nx * Ny - 1)
+	Dim N : N = -1
+	
+	Dim baseIndex
+	Dim i, j
+	
+	For i = 0 To Nx-1
+		For j = 0 To Ny-1
+			N = N+1
+			
+			baseIndex = i*(Ny+1) + j
+			F(N) = Array(baseIndex, baseIndex+1, baseindex+Ny+2, baseIndex+Ny+1)
+		Next
+	Next
+	
+	CreateMeshFaces = F
+End Function

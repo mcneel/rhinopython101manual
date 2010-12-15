@@ -1,0 +1,28 @@
+Option Explicit
+'Iteratively scale down a curve until it becomes shorter than a certain length
+
+FitCurveToLength()
+Sub FitCurveToLength()
+    Dim strCurveID
+    strCurveID = Rhino.GetObject("Select a curve to fit to length", 4, True, True)
+    If IsNull(strCurveID) Then Exit Sub
+    
+    Dim dblLength
+    dblLength = Rhino.CurveLength(strCurveID)
+
+    Dim dblLengthLimit
+    dblLengthLimit = Rhino.GetReal("Length limit", 0.5 * dblLength, 0.01 * dblLength, dblLength)
+    If IsNull(dblLengthLimit) Then Exit Sub
+
+    Do
+        If Rhino.CurveLength(strCurveID) <= dblLengthLimit Then Exit Do
+
+        strCurveID = Rhino.ScaleObject(strCurveID, Array(0,0,0), Array(0.95, 0.95, 0.95))
+        If IsNull(strCurveID) Then
+            Rhino.Print "Something went wrong..."
+            Exit Sub
+        End If
+    Loop
+
+    Rhino.Print "New curve length: " & Rhino.CurveLength(strCurveID)
+End Sub

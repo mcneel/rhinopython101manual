@@ -1,0 +1,40 @@
+Sub Main()
+    Dim strSurfaceID
+    strSurfaceID = Rhino.GetObject("Select a surface to sample", 8, True)
+    If IsNull(strSurfaceID) Then Exit Sub
+
+    Dim strCurveID
+    strCurveID = Rhino.GetObject("Select a curve to measure", 4, True, True)
+    If IsNull(strCurveID) Then Exit Sub
+
+    Dim arrPts : arrPts = Rhino.DivideCurve(strCurveID, 500)
+    Dim i
+
+    Call Rhino.EnableRedraw(False)
+    For i = 0 To UBound(arrPts)
+        Call EvaluateDeviation(strSurfaceID, 1.0, arrPts(i))
+    Next
+    Call Rhino.EnableRedraw(True)
+End Sub
+
+Function EvaluateDeviation(strSurfaceID, dblThreshold, arrSample)
+    EvaluateDeviation = Null
+
+    Dim arrR2Point
+    arrR2Point = Rhino.SurfaceClosestPoint(strSurfaceID, arrSample)
+    If IsNull(arrR2Point) Then Exit Function
+
+    Dim arrR3Point : arrR3Point = Rhino.EvaluateSurface(strSurfaceID, arrR2Point)
+    If IsNull(arrR3Point) Then Exit Function
+
+    Dim dblDeviation : dblDeviation = Rhino.Distance(arrR3Point, arrSample)
+    If dblDeviation <= dblThreshold Then
+        EvaluateDeviation = True
+        Exit Function
+    End If
+
+    Call Rhino.AddPoint(arrSample)
+    Call Rhino.AddLine(arrSample, arrR3Point)
+    
+    EvaluateDeviation = False
+End Function

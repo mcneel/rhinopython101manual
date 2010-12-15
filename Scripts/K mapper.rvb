@@ -1,0 +1,51 @@
+﻿Option Explicit
+
+Call Main()
+Sub Main()
+	Dim idSrf : idSrf = Rhino.GetObject("Surface for principal curvature analysis", 8, True, True)
+	If IsNull(idSrf) Then Exit Sub
+	
+	Dim k, kmax
+	Dim kId
+	Dim u, v
+	
+	Call Rhino.EnableRedraw(False)
+	For u = uDomain(0) To uDomain(1) + 0.5*uStep Step uStep
+		For v = vDomain(0) To vDomain(1) + 0.5*vStep Step vStep
+			k = Rhino.SurfaceCurvature(idSrf, Array(u,v))
+			If Not IsNull(k) Then
+				kmax = Rhino.VectorUnitize(k(3))
+				kmax = Rhino.VectorScale(kmax, 0.1) 
+				kId = Rhino.AddLine(k(0), Rhino.VectorAdd(k(0), kmax))
+				Call Rhino.CurveArrows(kId, 2)	
+			End If
+		Next
+	Next
+	Call Rhino.EnableRedraw(True)
+End Sub
+
+Function SurfaceTensorField(ByVal idSrf, ByVal Nu, ByVal Nv, ByRef T, ByRef K)
+	SurfaceTensorField = False
+	
+	Dim uDomain : uDomain = Rhino.SurfaceDomain(idSrf, 0)
+	Dim vDomain : vDomain = Rhino.SurfaceDomain(idSrf, 1)
+	
+	Dim i, j, u, v
+	
+	'Dim T(,), K(,)
+	ReDim T(Nu, Nv)
+	ReDim K(Nu, Nv)
+	
+	For i = 0 To Nu
+		u = uDomain(0) + (Nu/i)*(uDomain(1) - uDomain(0))
+		
+		For j = 0 To Nv
+			v = vDomain(0) + (Nv/j)*(vDomain(1) - vDomain(0))
+		
+			T(i,j) = Rhino.SurfaceFrame(idSrf, Array(u,v))
+			K(i,j) = Rhino.SurfaceCurvature(idSrf, Array(u,v))(3)
+		Next
+	Next
+	
+	SurfaceTensorField = True
+End Function

@@ -1,0 +1,14 @@
+Option Explicit
+'Display an updating digital clock in all viewports
+
+Call ViewportClock()
+Sub ViewportClock()
+    Dim strTextObjectID
+    strTextObjectID = Rhino.AddText(CStr(Time()), Array(0,0,0), 20)
+    If IsNull(strTextObjectID) Then Exit Sub
+    
+    Do
+        Call Rhino.Sleep(1000)
+        Call Rhino.TextObjectText(strTextObjectID, CStr(Time()))
+    Loop
+End Sub

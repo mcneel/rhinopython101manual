@@ -1,0 +1,18 @@
+Option Explicit
+'Draw a sine wave using points
+
+Call DrawSineWave()
+Sub DrawSineWave()
+    Dim x, y
+    Dim dblA, dblB, dblStep
+
+    dblA = -8.0
+    dblB = 8.0
+    dblStep = 0.25
+
+    For x = dblA To dblB Step dblStep
+        y = 2*Sin(x)
+        
+        Call Rhino.AddPoint(Array(x, y, 0))
+    Next
+End Sub

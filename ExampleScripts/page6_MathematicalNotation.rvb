@@ -1,0 +1,23 @@
+x = 15 + 26
+Rhino.Print x
+
+x = 15 + 26 * 2.33
+Rhino.Print x
+
+x = Sin(15 + 26) + Sqr(2.33)
+Rhino.Print x
+
+x = 4 * Atn(1)
+Rhino.Print x
+
+x = 2 * Sin(15 + 26) + Log(55)
+Rhino.Print x
+
+
+x = 6
+x = x + 1
+Rhino.Print x
+
+y = 34
+x = Sin(y) + Sqr(0.5 * y)
+Rhino.Print x

@@ -1,0 +1,7 @@
+Call Main()
+Sub Main()
+    If Not Rhino.IsBlock("SomeBlockName") Then
+        Rhino.Print "Missing block definition: SomeBlockName"
+        Exit Sub
+    End If
+End Sub

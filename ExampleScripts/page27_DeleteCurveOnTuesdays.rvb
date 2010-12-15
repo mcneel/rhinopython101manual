@@ -1,0 +1,25 @@
+Option Explicit
+
+Call DeleteCurvesOnTuesdays()
+Sub DeleteCurvesOnTuesdays()
+	Dim strObjectID : strObjectID = Rhino.GetObject("Select an object to delete on tuesdays", 0, True, True)
+    If IsNull(strObjectID) Then Exit Sub
+
+    If Rhino.IsCurve(strObjectID) Then
+        If Rhino.CurveLength(strObjectID) < 1.0 Then
+            If Rhino.IsCurveClosed(strObjectID) Then
+                If WeekDay(Now()) = vbTuesday Then
+                    Call Rhino.DeleteObject(strObjectID)
+                Else
+                    Call Rhino.Print("This software is a tryout version and runs only on tuesdays. Please purchase the full product.")
+                End If
+            Else
+                Call Rhino.Print("Curve was not closed")
+            End If
+        Else
+            Call Rhino.Print("Curve was too long")
+        End If
+    Else
+        Call Rhino.Print("Object was not a curve")
+    End If
+End Sub

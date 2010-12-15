@@ -1,0 +1,129 @@
+Option Explicit
+
+Call GeodesicCurve()
+Sub GeodesicCurve()
+    Dim strSurfaceID
+    strSurfaceID = Rhino.GetObject("Select surface for geodesic curve solution", 8, True, True)
+    If IsNull(strSurfaceID) Then Exit Sub
+
+    Dim arrV
+    arrV = GetR2PathOnSurface(strSurfaceID, 10, "Start of geodesic curve", "End of geodesic curve")
+    If IsNull(arrV) Then Exit Sub
+
+    Dim dblTolerance : dblTolerance = Rhino.UnitAbsoluteTolerance() / 10
+    Dim dblLength : dblLength = 1e300
+    Dim dblNewLength : dblNewLength = 0.0
+
+    Do
+        Call Rhino.Prompt("Solving geodesic fit for " & UBound(arrV) & " samples")
+        Call GeodesicFit(arrV, strSurfaceID, dblTolerance)
+
+        dblNewLength = PolylineLength(arrV)
+        If (Abs(dblNewLength - dblLength) < dblTolerance) Then Exit Do
+
+        If (UBound(arrV) > 1000) Then Exit Do
+
+        arrV = SubDividePolyline(arrV)
+        dblLength = dblNewLength
+    Loop
+
+    Call Rhino.AddPolyline(arrV)
+    Call Rhino.Print("Geodesic curve added with length: " & dblNewLength)
+End Sub
+
+Sub GeodesicFit(ByRef arrVertices, strSurfaceID, dblTolerance)
+    Dim dblLength
+    dblLength = PolylineLength(arrVertices)
+
+    Dim dblNewLength
+
+    Do
+        Call SmoothPolyline(arrVertices)
+        Call ProjectPolyline(arrVertices, strSurfaceID)
+
+        dblNewLength = PolylineLength(arrVertices)
+        If (Abs(dblNewLength - dblLength) < dblTolerance) Then Exit Do
+
+        dblLength = dblNewLength
+    Loop
+End Sub
+
+Sub SmoothPolyline(ByRef arrVertices)
+    Dim arrCopy : arrCopy = arrVertices
+    Dim i, j
+
+    For i = 1 To UBound(arrVertices)-1
+        For j = 0 To 2
+            arrVertices(i)(j) = (arrCopy(i-1)(j) + _
+                arrCopy(i)(j) + _
+                arrCopy(i+1)(j)) / 3.0
+        Next
+    Next
+End Sub
+
+Sub ProjectPolyline(ByRef arrVertices, strSurfaceID)
+    Dim arrProjPt, i
+
+    For i = 1 To UBound(arrVertices)-1
+        arrProjPt = Rhino.BRepClosestPoint(strSurfaceID, arrVertices(i))
+        If Not IsNull(arrProjPt) Then
+            arrVertices(i) = arrProjPt(0)
+        End If
+    Next
+End Sub
+
+Function GetR2PathOnSurface(strSurfaceID, intSegments, strPrompt1, strPrompt2)
+    GetR2PathOnSurface = Null
+
+    Dim ptStart, ptEnd
+    ptStart = Rhino.GetPointOnSurface(strSurfaceID, strPrompt1)
+    If IsNull(ptStart) Then Exit Function
+
+    ptEnd = Rhino.GetPointOnSurface(strSurfaceID, strPrompt2)
+    If IsNull(ptEnd) Then Exit Function
+
+    If (Rhino.Distance(ptStart, ptEnd) = 0.0) Then Exit Function
+
+    Dim uvA : uvA = Rhino.SurfaceClosestPoint(strSurfaceID, ptStart)
+    Dim uvB : uvB = Rhino.SurfaceClosestPoint(strSurfaceID, ptEnd)
+    Dim arrV() : ReDim arrV(intSegments)
+
+    Dim i, t, u, v
+    For i = 0 To intSegments
+        t = i / intSegments
+        u = uvA(0) + t*(uvB(0) - uvA(0))
+        v = uvA(1) + t*(uvB(1) - uvA(1))
+        arrV(i) = Rhino.EvaluateSurface(strSurfaceID, Array(u, v))
+    Next
+
+    GetR2PathOnSurface = arrV
+End Function
+
+Function SubDividePolyline(ByRef arrV)
+    Dim arrSubD()
+    ReDim arrSubD(2 * UBound(arrV))
+
+    Dim i
+    For i = 0 To UBound(arrV)-1
+        'copy the original vertex location
+        arrSubD(i * 2) = arrV(i)
+        'compute the average of the current vertex and the next one
+        arrSubD(i * 2 + 1) = Array((arrV(i)(0) + arrV(i+1)(0)) / 2.0, _
+            (arrV(i)(1) + arrV(i+1)(1)) / 2.0, _
+            (arrV(i)(2) + arrV(i+1)(2)) / 2.0)
+    Next
+
+    'copy the last vertex (this is skipped by the loop)
+    arrSubD(UBound(arrSubD)) = arrV(UBound(arrV))
+
+    SubDividePolyline = arrSubD
+End Function
+
+Function PolylineLength(ByRef arrVertices)
+    PolylineLength = 0.0
+
+    Dim i
+    For i = 0 To UBound(arrVertices)-1
+        PolylineLength = PolylineLength + Rhino.Distance(arrVertices(i), arrVertices(i+1))
+    Next
+End Function

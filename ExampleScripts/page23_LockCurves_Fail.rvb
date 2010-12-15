@@ -1,0 +1,6 @@
+'Try running this script on an empty file, it will crash.
+
+Call LockCurves_Fail()
+Sub LockCurves_Fail()
+    Call Rhino.LockObjects(Rhino.ObjectsByType(4))
+End Sub

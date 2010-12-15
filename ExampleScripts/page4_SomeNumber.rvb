@@ -1,0 +1,7 @@
+somenumber = Rhino.GetReal("Line length")
+line = Rhino.AddLine(Array(0,0,0), Array(somenumber,0,0))
+If IsNull(line) Then
+	Rhino.Print "Something went wrong"
+Else
+	Rhino.Print "Line curve inserted"
+End If

@@ -1,0 +1,37 @@
+Option Explicit
+
+Call Main()
+Sub Main()
+    Dim strObjectID
+    strObjectID = Rhino.GetObject("Select an object to sort")
+    If IsNull(strObjectID) Then Exit Sub
+
+    Dim intObjectType
+    intObjectType = Rhino.ObjectType(strObjectID)
+    If IsNull(intObjectType) Then Exit Sub
+    
+    Dim strLayerName
+    Select Case intObjectType
+        Case 1, 2
+            strLayerName = "Points"
+        Case 4
+            strLayerName = "Curves"
+        Case 8, 16
+			strLayerName = "PolySurfaces"
+        Case 32
+            strLayerName = "Meshes"
+        Case 256
+            strLayerName = "Lights"
+        Case 512, 8192
+            strLayerName = "Annotations"
+        Case 2048, 4096
+            strLayerName = "Blocks"
+        Case Else
+            Exit Sub
+    End Select
+
+    If Not Rhino.IsLayer(strLayerName) Then
+        Call Rhino.AddLayer(strLayerName)
+    End If
+    Call Rhino.ObjectLayer(strObjectID, strLayerName)
+End Sub

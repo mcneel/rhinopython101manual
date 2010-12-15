@@ -1,0 +1,127 @@
+﻿Option Explicit
+
+Call Main()
+Sub Main()
+	'Prompt for the base surface
+	Dim idSrf : idSrf = Rhino.GetObject("Surface for tensor curvature field", 8, True, True)
+	If IsNull(idSrf) Then Exit Sub
+
+	'Set a bunch of default values
+	Dim u : u = 30
+	Dim v : v = 30
+	Dim S : S = 0
+	
+	'Asks for all values at once using a PropertyListBox
+	Dim pListBoxResult
+	pListBoxResult = Rhino.PropertyListBox( _
+		Array("U-samples", "V-samples", "Smoothing iterations"), _
+		Array(u, v, S), _
+		"Algorithm settings", _
+		"Tensor field")
+	
+	'Handle user abort
+	If IsNull(pListBoxResult) Then Exit Sub
+	
+	'A propertylistbox is a String based dialog.
+	'We need to make sure the user entered numeric strings only
+	Dim Item
+	For Each Item In pListBoxResult
+		If (Not IsNumeric(Item)) Then Exit Sub
+	Next
+	
+	'convert the Strings from the propertylistbox into integers
+	u = CInt(pListBoxResult(0))
+	v = CInt(pListBoxResult(1))
+	S = CInt(pListBoxResult(2))
+
+	If (u < 1) Or (v < 1) Or (S < 0) Then Exit Sub
+	
+	'T holds all tangent planes
+	'K holds all principal curvature directions
+	Dim T(), K()
+	Call SurfaceTensorField(idSrf, u, v, T, K)
+
+	'Smooth the Tensor field S times
+	Dim i, j
+	For i = 1 To S
+		Call Rhino.Prompt("Smoothing tensor field. Iteration: " & i)
+		Call SmoothTensorField(T, K)
+	Next
+	
+	'Add all smoothed vectors as line segments
+	Call Rhino.EnableRedraw(False)
+	
+	Dim A, B
+	For i = 0 To u
+		For j = 0 To v
+			A = T(i,j)(0)
+			B = Rhino.PointAdd(A, K(i,j))
+
+			Call Rhino.AddLine(A, B)
+		Next
+	Next
+	
+	Call Rhino.EnableRedraw(True)
+End Sub
+
+Sub SurfaceTensorField(ByVal idSrf, ByVal Nu, ByVal Nv, ByRef T, ByRef K)
+	Dim uDomain : uDomain = Rhino.SurfaceDomain(idSrf, 0)
+	Dim vDomain : vDomain = Rhino.SurfaceDomain(idSrf, 1)
+	
+	ReDim T(Nu, Nv)
+	ReDim K(Nu, Nv)
+	Dim localCurvature
+	
+	Dim i, j, u, v
+	For i = 0 To Nu
+		u = uDomain(0) + (i/Nu)*(uDomain(1) - uDomain(0))
+		
+		For j = 0 To Nv
+			v = vDomain(0) + (j/Nv)*(vDomain(1) - vDomain(0))
+		
+			T(i,j) = Rhino.SurfaceFrame(idSrf, Array(u,v))
+			
+			localCurvature = Rhino.SurfaceCurvature(idSrf, Array(u,v))
+			If (IsNull(localCurvature)) Then
+				K(i,j) = T(i,j)(1)
+			Else
+				K(i,j) = Rhino.SurfaceCurvature(idSrf, Array(u,v))(3)	
+			End If
+		Next
+	Next
+End Sub
+
+Function SmoothTensorField(ByRef T, ByRef K)
+	SmoothTensorField = False
+	Dim K_copy : K_copy = K
+	
+	Dim Ub1 : Ub1 = UBound(T, 1)
+	Dim Ub2 : Ub2 = UBound(T, 2)
+	
+	Dim i, j, x, y, xm, ym
+	Dim k_dir, k_tot
+	
+	For i = 0 To Ub1
+		For j = 0 To Ub2
+			k_tot = Array(0,0,0)
+			
+			For x = i-1 To i+1
+				xm = (x+Ub1) Mod Ub1
+				
+				For y = j-1 To j+1
+					ym = (y+Ub2) Mod Ub2
+
+					k_tot = Rhino.VectorAdd(k_tot, K_copy(xm,ym))
+				Next
+			Next
+			
+			k_dir = Rhino.PlaneClosestPoint(T(i,j), Rhino.VectorAdd(T(i,j)(0), k_tot))
+			k_tot = Rhino.VectorSubtract(k_dir, T(i,j)(0))
+			k_tot = Rhino.VectorUnitize(k_tot)
+			
+			K(i,j) = k_tot
+		Next
+	Next
+	
+	SmoothTensorField = True
+End Function

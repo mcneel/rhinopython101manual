@@ -1,0 +1,12 @@
+Option Explicit
+
+Sub Main()
+    Dim blnResult
+    blnResult = MyBogusFunction(45, "Fruitbat")
+End Sub
+
+Function MyBogusFunction(intNumber1, intNumber2)
+    intNumber1 = intNumber1 + 100
+    intNumber2 = intNumber2 * 2
+    MyBogusFunction = (intNumber1 > intNumber2)
+End Function

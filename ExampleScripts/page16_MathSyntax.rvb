@@ -1,0 +1,11 @@
+Call Main()
+Sub Main()
+    Dim x1, x2, x3
+    x1 = 15 + 26 * 2.33
+    x2 = Sin(15 + 26) + Sqr(2.33)
+    x3 = Tan(15 + 26) / Log(55)
+  
+    Rhino.Print x1
+    Rhino.Print x2
+    Rhino.Print x3
+End Sub

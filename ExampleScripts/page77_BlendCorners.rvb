@@ -1,0 +1,57 @@
+Option Explicit
+
+Call BlendCorners()
+Sub BlendCorners()
+	Dim idPolyline : idPolyline = Rhino.GetObject("Polyline to blend", 4, True, True)
+	If IsNull(idPolyline) Then Exit Sub
+	
+	Dim arrV, newV() : arrV = Rhino.PolylineVertices(idPolyline)
+	If IsNull(arrV) Then Exit Sub
+	
+	Dim dblRadius : dblRadius = Rhino.GetReal("Blend radius", 1.0, 0.0)
+	If IsNull(dblRadius) Then Exit Sub
+	
+	Dim i, N
+	Dim SegmentLength, vecSegment
+	Dim A, B, W1, W2
+	
+	N = -1
+	For i = 0 To UBound(arrV)-1
+		A = arrV(i)
+		B = arrV(i+1)
+		
+		SegmentLength = Rhino.Distance(A, B)
+		vecSegment = Rhino.PointSubtract(B, A) 
+		vecSegment = Rhino.VectorUnitize(vecSegment)
+		
+		If dblRadius < (0.5*SegmentLength) Then
+			vecSegment = Rhino.VectorScale(vecSegment, dblRadius)	
+		Else
+			vecSegment = Rhino.VectorScale(vecSegment, 0.5*SegmentLength)
+		End If
+		
+		W1 = Rhino.VectorAdd(A, vecSegment)
+		W2 = Rhino.VectorSubtract(B, vecSegment)
+		
+		ReDim Preserve newV(N+6)
+		
+		newV(N+1) = A
+		newV(N+2) = Between(A, W1)
+		newV(N+3) = W1
+		newV(N+4) = Between(W1, W2)
+		newV(N+5) = W2
+		newV(N+6) = Between(W2, B)
+		
+		N = N+6
+	Next
+	
+	ReDim Preserve newV(N+1)
+	newV(N+1) = arrV(UBound(arrV))
+	
+	Call Rhino.AddCurve(newV, 5)
+	Call Rhino.DeleteObject(idPolyline)
+End Sub
+
+Function Between(ByVal A, ByVal B)
+	Between = Array((A(0)+B(0))/2, (A(1)+B(1))/2, (A(2)+B(2))/2)
+End Function

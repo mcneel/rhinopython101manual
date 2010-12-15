@@ -1,0 +1,98 @@
+Option Explicit
+
+Call CreateCurvatureGraph()
+Sub CreateCurvatureGraph()
+	Dim idCurves : idCurves = Rhino.GetObjects("Curves for curvature graph", 4, False, True, True)
+	If IsNull(idCurves) Then Exit Sub
+	
+	Dim bResult, i
+	Dim intSamples : intSamples = 10
+	Dim dblScale : dblScale = 1.0
+	
+	Dim arrPreview() : ReDim arrPreview(UBound(idCurves))
+	
+	Do 	
+		Call Rhino.EnableRedraw(False)
+		For i = 0 To UBound(arrPreview)
+			If IsArray(arrPreview(i)) Then Rhino.DeleteObjects(arrPreview(i))
+		Next
+		
+		For i = 0 To UBound(arrPreview)
+			arrPreview(i) = AddCurvatureGraph(idCurves(i), intSamples, dblScale)
+		Next
+		Call Rhino.EnableRedraw(True)
+		
+		bResult = Rhino.GetString("Curvature settings", "Accept", Array("Samples", "Scale", "Accept"))
+		If IsNull(bResult) Then
+			For i = 0 To UBound(arrPreview)
+				If IsArray(arrPreview(i)) Then Rhino.DeleteObjects(arrPreview(i))
+			Next
+			
+			Exit Do
+		End If
+		
+		Select Case UCase(bResult)
+			Case "ACCEPT"
+				Exit Do
+			Case "SAMPLES"
+				bResult = Rhino.GetInteger("Number of samples per knot-span", intSamples, 3, 100)
+				If Not IsNull(bResult) Then intSamples = bResult
+			Case "SCALE"
+				bResult = Rhino.GetReal("Scale of the graph", dblScale, 0.01, 1000.0)
+				If Not IsNull(bResult) Then dblScale = bResult
+		End Select
+	Loop
+End Sub
+
+Function AddCurvatureGraph(ByVal idCrv, ByVal SpanSamples, ByVal Scale)
+	Dim allGeometry, tmpGeometry
+	Dim i, K
+	
+	allGeometry = Array()
+	
+	K = Rhino.CurveKnots(idCrv)	
+	For i = 0 To UBound(K)-1
+		tmpGeometry = AddCurvatureGraphSection(idCrv, K(i), K(i+1), SpanSamples, Scale)
+		
+		If Not IsNull(tmpGeometry) Then
+			allGeometry = Rhino.JoinArrays(allGeometry, tmpGeometry)
+		End If
+	Next
+	
+	Call Rhino.AddObjectsToGroup(allGeometry, Rhino.AddGroup())
+	AddCurvatureGraph = allGeometry
+End Function
+
+Function AddCurvatureGraphSection(ByVal idCrv, ByVal t0, ByVal t1, ByVal Samples, ByVal Scale)
+	AddCurvatureGraphSection = Null
+	If (t1 - t0) <= 0.0 Then Exit Function
+	
+	Dim arrA() : ReDim arrA(Samples)
+	Dim arrB() : ReDim arrB(Samples)
+	Dim arrObjects : ReDim arrObjects(Samples+1)	
+	
+	Dim cData, cVector
+	Dim t, tStep, N
+	N = -1
+	
+	tStep = (t1-t0) / Samples
+	For t = t0 To (t1 + (0.5*tStep)) Step tStep
+		If t >= t1 Then t = t1 - 1e-10
+		N = N+1
+		
+		cData = Rhino.CurveCurvature(idCrv, t)
+		If IsNull(cData) Then
+			arrA(N) = Rhino.EvaluateCurve(idCrv, t)
+			arrB(N) = arrA(N)
+			arrObjects(N) = ""
+		Else
+			cData(4) = Rhino.VectorScale(cData(4), Scale)
+			arrA(N) = cData(0)
+			arrB(N) = Rhino.VectorSubtract(cData(0), cData(4)) 
+			arrObjects(N) = Rhino.AddLine(arrA(N), arrB(N))
+		End If
+	Next
+	
+	arrObjects(Samples+1) = Rhino.AddInterpCurve(arrB)
+	AddCurvatureGraphSection = arrObjects
+End Function

@@ -1,0 +1,22 @@
+Option Explicit
+
+Call TwistAndShout()
+Sub TwistAndShout()
+    Dim z, a
+    Dim pi, dblTwistAngle
+    pi = Rhino.Pi()
+    dblTwistAngle = 0.0
+
+    Call Rhino.EnableRedraw(False)
+    For z = 0 To 5 Step 0.5
+        dblTwistAngle = dblTwistAngle + (pi/30)
+
+        For a = 0 To 2*pi Step (pi/15)
+            Dim x, y
+            x = 5 * Sin(a + dblTwistAngle)
+            y = 5 * Cos(a + dblTwistAngle)
+            Call Rhino.AddSphere(Array(x,y,z), 0.5)
+        Next
+    Next
+    Call Rhino.EnableRedraw(True)
+End Sub

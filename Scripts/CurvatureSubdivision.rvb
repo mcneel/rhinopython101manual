@@ -1,0 +1,61 @@
+﻿Option Explicit
+
+Call Main()
+Sub Main()
+	Dim idSrf : idSrf = Rhino.GetObject("Surface to recurse", 8, True, True)
+	If IsNull(idSrf) Then Exit Sub
+	
+	Dim uDomain : uDomain = Rhino.SurfaceDomain(idSrf, 0)
+	Dim vDomain : vDomain = Rhino.SurfaceDomain(idSrf, 1) 
+	
+	Call RecurseSurface(idSrf, uDomain(0), uDomain(1), vDomain(0), vDomain(1))
+End Sub
+
+Function RecurseSurface(ByVal idSrf, ByVal u0, ByVal u1, ByVal v0, ByVal v1)
+	Dim A : A = Rhino.EvaluateSurface(idSrf, Array(u0, v0))
+	Dim B : B = Rhino.EvaluateSurface(idSrf, Array(u1, v0))
+	Dim C : C = Rhino.EvaluateSurface(idSrf, Array(u1, v1))
+	Dim D : D = Rhino.EvaluateSurface(idSrf, Array(u0, v1))
+	
+	Dim sGauss : sGauss = SurfaceCurvature(idSrf, u0, u1, v0, v1)
+	Dim sDiag : sDiag = Rhino.Distance(A, C)
+	Dim sFactor : sFactor = Abs(sDiag * sGauss)
+	
+	Call Rhino.Print( _
+	"Gauss:" & Round(sGauss, 4) & _
+	"   Diagonal:" & Round(sDiag, 2) & _
+	"   Factor:" & Round(sFactor, 3))
+	
+	If (sFactor < 10.0) Then
+		Call Rhino.AddCurve(Array(A, B, C, D, A), 3)
+	Else
+		Dim um : um = u0 + 0.5 * (u1-u0)
+		Dim vm : vm = v0 + 0.5 * (v1-v0)
+		
+		Call RecurseSurface(idSrf, u0, um, v0, vm)
+		Call RecurseSurface(idSrf, um, u1, v0, vm)
+		Call RecurseSurface(idSrf, u0, um, vm, v1)
+		Call RecurseSurface(idSrf, um, u1, vm, v1)
+	End If
+End Function
+
+Function SurfaceCurvature(ByVal idSrf, ByVal u0, ByVal u1, ByVal v0, ByVal v1)
+	Dim Gsum, Gdat
+	Gsum = 0.0
+	
+	Dim u, v
+	Dim uStep : uStep = 0.1 * (u1-u0)
+	Dim vStep : vStep = 0.1 * (v1-v0)
+	
+	For u = u0 To u1 + (0.5*uStep) Step uStep
+		For v = v0 To v1 + (0.5*vStep) Step vStep
+			Gdat = Rhino.SurfaceCurvature(idSrf, Array(u,v))
+			
+			If (Not IsNull(Gdat)) Then
+				Gsum = Gsum + Gdat(6)
+			End If
+		Next
+	Next
+	
+	SurfaceCurvature = Gsum
+End Function

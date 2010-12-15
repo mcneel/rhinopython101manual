@@ -1,0 +1,55 @@
+﻿Option Explicit
+
+Call PrincipalCurvatureMapper()
+Sub PrincipalCurvatureMapper()
+	Dim dSelect : dSelect = Rhino.GetSurfaceObject("Point on surface to start from", False, True)
+	If IsNull(dSelect) Then Exit Sub
+	If (dSelect(2) <> 1) Then
+		Call Rhino.Print("You must pick on a surface for this to work")
+		Exit Sub
+	End If
+	
+	Dim idSrf : idSrf = dSelect(0)
+	Dim uvPt : uvPt = dSelect(4)
+	
+	Dim uvPts() : ReDim uvPts(0) : uvPts(0) = uvPt
+	Dim i, nUVPt
+	
+	For i = 0 To 10000
+		nUVPt = MapCurvatureStep(idSrf, uvPts(i), True, True, 0.1)
+		If IsNull(nUVPt) Then Exit For
+		
+		ReDim Preserve uvPts(i+1)
+		uvPts(i+1) = nUVPt
+	Next
+
+	If (Ubound(uvPts) > 1) Then
+		Call Rhino.AddInterpCrvOnSrfUV(idSrf, uvPts) 
+	End If
+End Sub
+
+Function MapCurvatureStep(ByVal idSrf, ByVal uvPt, ByVal bMax, ByVal bRev, ByVal dAccuracy)
+	MapCurvatureStep = Null
+	
+	Dim datCurvature : datCurvature = Rhino.SurfaceCurvature(idSrf, uvPt)
+	If IsNull(datCurvature) Then Exit Function
+	
+	Dim dVec
+	If bMax Then
+		dVec = datCurvature(3)
+	Else
+		dVec = datCurvature(5)
+	End If
+	
+	If bRev Then Rhino.VectorReverse(dVec)
+	dVec = Rhino.VectorUnitize(dVec)
+	dVec = Rhino.VectorScale(dVec, dAccuracy)
+	
+	Dim dPoint : dPoint = Rhino.VectorAdd(datCurvature(0), dVec)
+	Dim nPoint : nPoint = Rhino.SurfaceClosestPoint(idSrf, dPoint)
+	Dim mPoint : mPoint = Rhino.EvaluateSurface(idSrf, nPoint)
+	
+	If (Rhino.Distance(mPoint, datCurvature(0)) < (0.5*dAccuracy)) Then Exit Function
+
+	MapCurvatureStep = nPoint
+End Function

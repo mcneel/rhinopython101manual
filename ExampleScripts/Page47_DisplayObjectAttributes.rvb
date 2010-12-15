@@ -1,0 +1,35 @@
+Sub DisplayObjectAttributes(ByVal strObjectID)
+    Dim arrSource : arrSource = Array("By Layer", "By Object", "By Parent")
+    Dim strData : strData = "Object attributes for :" & strObjectID & vbCrLf
+    
+    strData = strData & "Description: " & Rhino.ObjectDescription(strObjectID) & vbCrLf
+    strData = strData & "Layer: " & Rhino.ObjectLayer(strObjectID) & vbCrLf
+    strData = strData & "LineType: " & Rhino.ObjectLineType(strObjectID) & vbCrLf
+    strData = strData & "LineTypeSource: " & _
+    arrSource(Rhino.ObjectLineTypeSource(strObjectID)) & vbCrLf
+    strData = strData & "MaterialSource: " & _
+    arrSource(Rhino.ObjectMaterialSource(strObjectID)) & vbCrLf
+    
+    Dim strName
+    strName = Rhino.ObjectName(strObjectID)
+    
+    If IsNull(strName) Then
+        strData = strData & "<Unnamed object>" & vbCrLf
+    Else
+        strData = strData & "Name: " & strName & vbCrLf
+    End If
+    
+    Dim arrGroups
+    arrGroups = Rhino.ObjectGroups(strObjectID)
+    
+    If IsArray(arrGroups) Then
+        Dim i
+        For i = 0 To UBound(arrGroups)
+            strData = strData & "Group(" & i & "): " & arrGroups(i) & vbCrLf
+        Next
+    Else
+        strData = strData & "<Ungrouped object>" & vbCrLf
+    End If
+    
+    Call Rhino.EditBox(strData, "Object attributes", "RhinoScript¹º¹")
+End Sub

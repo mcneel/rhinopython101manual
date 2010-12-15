@@ -1,0 +1,35 @@
+Call DistributeCirclesOnSphere()
+Sub DistributeCirclesOnSphere()
+    Dim SphereRadius
+    SphereRadius = Rhino.GetReal("Radius of sphere", 10.0, 0.01)
+    If IsNull(SphereRadius) Then Exit Sub
+
+    Dim CircleRadius
+    CircleRadius = Rhino.GetReal("Radius of packing circles", 0.05 * SphereRadius, 0.001, 0.5 * SphereRadius)
+    If IsNull(CircleRadius) Then Exit Sub
+
+    Dim VerticalCount, HorizontalCount
+    VerticalCount = Int((Rhino.Pi * SphereRadius) / (2 * CircleRadius))
+
+    Dim phi, theta
+    Dim CircleCenter, CircleNormal, CirclePlane
+
+    Call Rhino.EnableRedraw(False)
+    For phi = -(0.5 * Rhino.Pi) To (0.5 * Rhino.Pi) Step (Rhino.Pi / VerticalCount)
+        HorizontalCount = Int((2 * Rhino.Pi * Cos(phi) * SphereRadius) / (2 * CircleRadius))
+        If HorizontalCount = 0 Then HorizontalCount = 1
+
+        For theta = 0 To (2 * Rhino.Pi - 1e-8) Step ((2 * Rhino.Pi) / HorizontalCount)
+            CircleCenter = Array(SphereRadius * Cos(theta) * Cos(phi), _
+
+            SphereRadius * Sin(theta) * Cos(phi), _
+            SphereRadius * Sin(phi))
+
+            CircleNormal = Rhino.PointSubtract(CircleCenter, Array(0,0,0))
+            CirclePlane = Rhino.PlaneFromNormal(CircleCenter, CircleNormal)
+
+            Call Rhino.AddCircle(CirclePlane, CircleRadius)
+        Next
+    Next
+    Call Rhino.EnableRedraw(True)
+End Sub

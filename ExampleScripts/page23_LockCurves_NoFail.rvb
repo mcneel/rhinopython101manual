@@ -1,0 +1,13 @@
+Option Explicit
+
+Call LockCurves_NoFail()
+Function LockCurves_NoFail()
+    LockCurves_NoFail = False
+
+    Dim arrCurves
+    arrCurves = Rhino.ObjectsByType(4)
+    If IsNull(arrCurves) Then Exit Function
+    
+    Call Rhino.LockObjects(arrCurves)
+    LockCurves_NoFail = True
+End Function

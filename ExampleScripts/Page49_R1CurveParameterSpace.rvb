@@ -1,0 +1,37 @@
+Sub Main()
+    Dim strCurveID
+    strCurveID = Rhino.GetObject("Select a curve to sample", 4, True, True)
+    If IsNull(strCurveID) Then Exit Sub
+    
+    Dim t
+    Call Rhino.EnableRedraw(False)
+    For t = 0.0 To 1.0 Step 0.002
+        Call AddPointAtR1Parameter(strCurveID, t)
+    Next
+    Call Rhino.EnableRedraw(True)
+End Sub
+
+Function AddPointAtR1Parameter(strCurveID, dblUnitParameter)
+    AddPointAtR1Parameter = Null
+    
+    Dim crvDomain : crvDomain = Rhino.CurveDomain(strCurveID)
+    If IsNull(crvDomain) Then Exit Function
+    
+    Dim dblR1Param
+    dblR1Param = crvDomain(0) + dblUnitParameter * (crvDomain(1) - crvDomain(0))
+    
+    Dim arrR3Point : arrR3Point = Rhino.EvaluateCurve(strCurveID, dblR1Param)
+    If Not IsArray(arrR3Point) Then Exit Function
+    
+    Dim strPointID : strPointID = Rhino.AddPoint(arrR3Point)
+    Call Rhino.ObjectColor(strPointID, ParameterColour(dblUnitParameter))
+    
+    AddPointAtR1Parameter = strPointID
+End Function
+
+Function ParameterColour(dblParam)
+    Dim RedComponent : RedComponent = 255 * dblParam
+    If (RedComponent < 0) Then RedComponent = 0
+    If (RedComponent > 255) Then RedComponent = 255
+    ParameterColour = RGB(RedComponent, 0, 255 - RedComponent)
+End Function

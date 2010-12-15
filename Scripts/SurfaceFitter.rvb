@@ -1,0 +1,112 @@
+﻿Option Explicit
+
+Call SurfaceFitter()
+Sub SurfaceFitter()
+	Dim idSrf : idSrf = Rhino.GetObject("Surface to fit", 8, True, True)
+	If IsNull(idSrf) Then Exit Sub
+	
+	Dim pts : pts = Rhino.GetPointCoordinates("Points to fit to", False)
+	If IsNull(pts) Then Exit Sub
+	
+	Dim N, nSrf
+	For N = 1 To 100
+		nSrf = FitSurface(idSrf, pts)
+		Call Rhino.DeleteObject(idSrf)
+		
+		idSrf = nSrf
+	Next
+End Sub
+
+Function FitSurface(ByVal idSrf, ByRef Samples())
+	Dim ptSurface : ptSurface = Rhino.SurfacePoints(idSrf) 
+	Dim grSurface : grSurface = Rhino.SurfaceEditPoints(idSrf, True, True)
+	Dim nrSurface : nrSurface = GrevilleNormals(idSrf)
+	
+	Dim uvSamples : uvSamples = XYZ_To_UVW(idSrf, Samples)
+	Dim vecForce() : ReDim vecForce(UBound(ptSurface))
+	
+	'Create null vectors for all control-point forces
+	Dim i
+	For i = 0 To UBound(vecForce)
+		vecForce(i) = Array(0,0,0)
+	Next
+	
+	Dim LocalCP, LocalForce
+	
+	For i = 0 To UBound(uvSamples)
+		LocalCP = NearestUV(uvSamples(i), grSurface)
+		LocalForce = nrSurface(LocalCP)
+		LocalForce = Rhino.VectorScale(LocalForce, uvSamples(i)(2))
+		
+		vecForce(LocalCP) = Rhino.VectorAdd(vecForce(LocalCP), LocalForce)
+	Next
+	
+	For i = 0 To UBound(ptSurface)
+		ptSurface(i) = Rhino.PointAdd(ptSurface(i), vecForce(i))
+	Next
+	
+	Dim srf_CP_Count : srf_CP_Count = Rhino.SurfacePointCount(idSrf)
+	Dim srf_Knots : srf_Knots = Rhino.SurfaceKnots(idSrf)
+	Dim srf_Weights : srf_Weights = Rhino.SurfaceWeights(idSrf)
+	Dim srf_Degree(1)
+	srf_Degree(0) = Rhino.SurfaceDegree(idSrf, 0)
+	srf_Degree(1) = Rhino.SurfaceDegree(idSrf, 1)
+	
+	FitSurface = Rhino.AddNurbsSurface(srf_CP_Count, ptSurface, srf_Knots(0), srf_Knots(1), srf_Degree, srf_Weights)
+End Function
+
+Function XYZ_To_UVW(ByVal idSrf, ByRef pXYZ())
+	Dim pUVW() : ReDim pUVW(UBound(pXYZ))
+	
+	Dim uvClosest, ptClosest, srfNormal
+	Dim fDistance, pPositive, pNegative
+	Dim i
+	
+	For i = 0 To UBound(pXYZ)
+		uvClosest = Rhino.SurfaceClosestPoint(idSrf, pXYZ(i))	
+		ptClosest = Rhino.EvaluateSurface(idSrf, uvClosest)
+		srfNormal = Rhino.SurfaceNormal(idSrf, uvClosest)
+		
+		pPositive = Rhino.PointAdd(ptClosest, srfNormal)
+		pNegative = Rhino.PointSubtract(ptClosest, srfNormal)	
+		fDistance = Rhino.Distance(ptClosest, pXYZ(i))
+		
+		If (Rhino.Distance(pXYZ(i), pPositive) > Rhino.Distance(pXYZ(i), pNegative)) Then
+			fDistance = -fDistance
+		End If
+
+		pUVW(i) = Array(uvClosest(0), uvClosest(1), fDistance)
+	Next
+	
+	XYZ_To_UVW = pUVW
+End Function
+
+Function GrevilleNormals(ByVal idSrf)
+	Dim uvGreville : uvGreville = Rhino.SurfaceEditPoints(idSrf, True, True)
+	Dim srfNormals() : ReDim srfNormals(UBound(uvGreville))
+	
+	Dim i
+	For i = 0 To UBound(uvGreville)	
+		srfNormals(i) = Rhino.SurfaceNormal(idSrf, uvGreville(i))
+	Next
+	
+	GrevilleNormals = srfNormals
+End Function
+
+Function NearestUV(ByVal uvPt, ByRef uvSet)
+	Dim minI, minD
+	minI = -1
+	minD = 1e300
+	
+	Dim i, d
+	For i = 0 To UBound(uvSet)
+		d = (uvPt(0) - uvSet(i)(0))^2 + (uvPt(1) - uvSet(i)(1))^2
+		
+		If (d < minD) Then
+			minI = i
+			minD = d
+		End If
+	Next
+	
+	NearestUV = minI
+End Function
