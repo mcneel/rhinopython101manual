@@ -1,7 +1,0 @@
-Dim strComplaint, strNag, strFood
-
-strComplaint = "I don't like "
-strFood = "Apfelstrudel. "
-strNag = "Can I go now?"
-
-Call Rhino.Print(strComplaint & strFood & strNag)
