@@ -1,6 +1,5 @@
 import rhinoscriptsyntax as rs
 
-
 def main():
     curve_id = rs.GetObject("Select a curve to sample", 4, True, True)
     if not curve_id: return
@@ -25,10 +24,10 @@ def addpointat_r1_parameter(curve_id, parameter):
     if not domain: return
     
     r1_param = domain[0] + parameter*(domain[1]-domain[0])
-    r3point = rs.EvaluateCurve(curve_id r1_param)
+    r3point = rs.EvaluateCurve(curve_id, r1_param)
     if r3point:
         point_id = rs.AddPoint(r3point)
-        rs.ObjectColor(point_id, ParameterColor(parameter))
+        rs.ObjectColor(point_id, parametercolor(parameter))
 
 
 if __name__=="__main__":

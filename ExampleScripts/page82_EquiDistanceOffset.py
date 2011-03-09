@@ -1,6 +1,5 @@
 import rhinoscriptsyntax as rs
 
-
 def equidistanceoffset():
     srf_id = rs.GetObject("Pick surface to offset", 8, True, True)
     if not srf_id: return
@@ -22,7 +21,7 @@ def equidistanceoffset():
                 offsetvertices.append(rs.EvaluateCurve(isocurves[0], t))
             rs.DeleteObjects(isocurves)
         u+=ustep
-
+        
     if offsetvertices: rs.AddInterpCrvOnSrf(srf_id, offsetvertices)
     rs.EnableRedraw(True)
 
@@ -37,7 +36,7 @@ def BSearchCurve(idCrv, Length, Tolerance):
     t1 = tmax
     while True:
         t = 0.5*(t1+t0)
-        Ltmp = rs.CurveLength(idCrv, , (tmin, t))
+        Ltmp = rs.CurveLength(idCrv, 0, [tmin, t])
         if abs(Ltmp-Length)<Tolerance: return t
 
         if Ltmp<Length: t0=t

@@ -1,6 +1,5 @@
 import rhinoscriptsyntax as rs
 
-
 def createcurvaturegraph():
     curve_ids = rs.GetObjects("Curves for curvature graph", 4, False, True, True)
     if not curve_ids: return
@@ -34,8 +33,9 @@ def createcurvaturegraph():
 
 def addcurvaturegraph( idCrv, spansamples, scale):
     allGeometry = []
-    Knots = rs.CurveKnots(idCrv)
-    for i in range(len(knots)-1):
+    knots = rs.CurveKnots(idCrv)
+    p=5
+    for i in range(knots.Count -1):
         tmpGeometry = addcurvaturegraphsection(idCrv, knots[i], knots[i+1], spansamples, scale)
         if tmpGeometry: allGeometry.append(tmpGeometry)
     rs.AddObjectsToGroup(allGeometry, rs.AddGroup())
@@ -49,17 +49,17 @@ def addcurvaturegraphsection(idCrv, t0, t1, samples, scale):
     t = t0
     points = []
     objects = []
-    while t<=(t1+(0.5*tstep):
-        if t>=t1: t= t1-1e-10
+    while t<=(t1+(0.5*tstep)):
+        if t>=t1:t = t1-1e-10
         N += 1
         cData = rs.CurveCurvature(idCrv, t)
         if not cData:
             points.append( rs.EvaluateCurve(idCrv, t) )
         else:
-            cData[4] = rs.VectorScale(cData[4], scale)
+            c = rs.VectorScale(cData[4], scale)
             a = cData[0]
-            b = rs.VectorSubtract(cData[0], cData[4])
-            objects.append(rs.AddLine(a,b)
+            b = rs.VectorSubtract(a, c)
+            objects.append(rs.AddLine(a,b))
             points.append(b)
         t += tstep
 

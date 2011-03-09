@@ -36,7 +36,7 @@ def AddArcDir(ptStart, ptEnd, vecDir):
     midLength = (0.5*rs.Distance(ptStart, ptEnd))/dotProd
     
     vecBisector = rs.VectorScale(vecBisector, midLength)
-    return rs.AddArc3Pt(ptStart, ptEnd, rs.PointAdd(ptStart, vecBisector))
+    return rs.AddArc3Pt(ptStart, rs.PointAdd(ptStart, vecBisector), ptEnd)
 
 
 if __name__=="__main__":

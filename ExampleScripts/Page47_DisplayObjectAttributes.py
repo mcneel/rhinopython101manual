@@ -8,7 +8,7 @@ def displayobjectattributes(object_id):
     data.append( "Layer: " + rs.ObjectLayer(object_id))
     data.append( "LineType: " + rs.ObjectLineType(object_id))
     data.append( "LineTypeSource: " + rs.ObjectLineTypeSource(object_id))
-    data.append( "MaterialSource: " + rs.ObjectMaterialSource(object_id))
+    data.append( "MaterialSource: " + str(rs.ObjectMaterialSource(object_id)))
     
     name = rs.ObjectName(object_id)
     if not name: data.append("<Unnamed object>")

@@ -1,6 +1,5 @@
 import rhinoscriptsyntax as rs
 
-
 def main():
     surface_id = rs.GetObject("Select a surface to sample", 8, True)
     if not surface_id: return
@@ -14,11 +13,11 @@ def main():
     rs.EnableRedraw(True)
 
 
-def evaluatedeviation( surface_is, threshold, sample ):
+def evaluatedeviation( surface_id, threshold, sample ):
     r2point = rs.SurfaceClosestPoint(surface_id, sample)
     if not r2point: return
 
-    r3point = rs.EvaluateSurface(surface_id, r2point)
+    r3point = rs.EvaluateSurface(surface_id, r2point[0], r2point[1])
     if not r3point: return
 
     deviation = rs.Distance(r3point, sample)

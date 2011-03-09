@@ -1,6 +1,5 @@
 import rhinoscriptsyntax as rs
 
-
 def geodesiccurve():
     surface_id = rs.GetObject("Select surface for geodesic curve solution", 8, True, True)
     if not surface_id: return
@@ -13,10 +12,10 @@ def geodesiccurve():
     newlength = 0.0
 
     while True:
-        rs.Prompt("Solving geodesic fit for %d samples" % len(vertices))
+        print("Solving geodesic fit for %d samples" % len(vertices))
         vertices = geodesicfit(vertices, surface_id, tolerance)
 
-        newlength = polylinelength(vertice)
+        newlength = polylinelength(vertices)
         if abs(newlength-length)<tolerance: break
         if len(vertices)>1000: break
         vertices = subdividepolyline(vertices)
@@ -32,7 +31,7 @@ def geodesicfit(vertices, surface_id, tolerance):
         vertices = smoothpolyline(vertices)
         vertices = projectpolyline(vertices, surface_id)
         newlength = polylinelength(vertices)
-        if abd(newlength-length)<tolerance: return vertices
+        if abs(newlength-length)<tolerance: return vertices
         length = newlength
 
 
@@ -46,6 +45,7 @@ def smoothpolyline(vertices):
         next = vertices[i+1]
         pt = (prev+this+next) / 3.0
         smooth.append(pt)
+    smooth.append(vertices[len(vertices)-1])
     return smooth
 
 
@@ -53,7 +53,7 @@ def projectpolyline(vertices, surface_id):
     polyline = []
     for vertex in vertices:
         pt = rs.BrepClosestPoint(surface_id, vertex)
-        if pt: polyline.append(pt)
+        if pt: polyline.append(pt[0])
     return polyline
 
 
@@ -74,7 +74,7 @@ def getr2pathonsurface(surface_id, segments, prompt1, prompt2):
         t = i / segments
         u = uva[0] + t*(uvb[0] - uva[0])
         v = uva[1] + t*(uvb[1] - uva[1])
-        pt = rs.EvaluateSurface(surface_id, (u,v))
+        pt = rs.EvaluateSurface(surface_id, u, v)
         path.append(pt)
     return path
 

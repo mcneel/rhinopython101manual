@@ -2,7 +2,7 @@
 #Script copyrighted by Robert McNeel & Associates
 #Script version 19 January 2011
 import rhinoscriptsyntax as rs
-
+import math
 
 def ProximityAnalysis():
     mesh_id = rs.GetObject("Mesh for proximity analysis", 32, True, True)
@@ -14,8 +14,8 @@ def ProximityAnalysis():
     vertices = rs.MeshVertices(mesh_id)
     faces = rs.MeshFaceVertices(mesh_id)
     arrD = VertexValueArray(vertices, brep_id)
-    minD = rs.Min(arrD)
-    maxD = rs.Max(arrD)
+    minD = min(arrD)
+    maxD = max(arrD)
     colors = []
     for i in range(len(vertices)):
         proxFactor = (arrD[i]-minD)/(maxD-minD)

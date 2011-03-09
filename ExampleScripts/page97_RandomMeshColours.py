@@ -1,7 +1,6 @@
 ﻿import rhinoscriptsyntax as rs
 from random import random
 
-
 def randommeshcolors():
     mesh_id = rs.GetObject("Mesh to randomize", 32, True, True)
     if not mesh_id: return
@@ -16,5 +15,6 @@ def randommeshcolors():
     rs.DeleteObject(mesh_id)
 
 
-if __name__=="__main__:
+if __name__=="__main__":
     randommeshcolors()
+    

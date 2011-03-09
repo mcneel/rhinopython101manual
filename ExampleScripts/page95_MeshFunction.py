@@ -1,14 +1,14 @@
 ﻿import rhinoscriptsyntax as rs
-import * from math
+import math
 
 
 def meshfunction_xy():
     zfunc, domain, resolution = loadfunctiondata()
-    zfunc = rs.StringBox("Specify a function f(x,y[,D,A])", zfunc, "Mesh function")
+    zfunc = rs.StringBox( zfunc, "Specify a function f(x,y[,D,A])", "Mesh function")
     if not zfunc: return
 
     while True:
-        prompt = "Function domain x{%f,%f} y{%f,%f} @%d" % domain[0], domain[1], domain[2], domain[3], resolution
+        prompt = "Function domain x{%f,%f} y{%f,%f} @%d" % (domain[0], domain[1], domain[2], domain[3], resolution)
         result = rs.GetString(prompt, "Insert", ("xMin","xMax","yMin","yMax","Resolution","Insert"))
         if not result: return
         result = result.upper()
@@ -50,7 +50,7 @@ def solveequation( function, x, y ):
     return z
 
 
-def createmeshvertices(function, fdomain, resolutio):
+def createmeshvertices(function, fdomain, resolution):
     xstep = (fdomain[1]-fdomain[0])/resolution
     ystep = (fdomain[3]-fdomain[2])/resolution
     v = []

@@ -28,13 +28,12 @@ def FlatWorm():
             crvPerp = (0,0,1)
             crvNormal = rs.VectorCrossProduct(crvTangent, crvPerp)
             crosssectionplane = rs.PlaneFromFrame(crvPoint, crvPerp, crvNormal)
-        Else
-            crvPoint = crvCurvature(0)
-            crvTangent = crvCurvature(1)
-            crvPerp = Rhino.VectorUnitize(crvCurvature(4))
-            crvNormal = Rhino.VectorCrossProduct(crvTangent, crvPerp)
+        else:
+            crvPoint = crvcurvature[0]
+            crvTangent = crvcurvature[1]
+            crvPerp = rs.VectorUnitize(crvcurvature[4])
+            crvNormal = rs.VectorCrossProduct(crvTangent, crvPerp)
             crosssectionplane = rs.PlaneFromFrame(crvPoint, crvPerp, crvNormal)
-        End If
 
         if crosssectionplane:
             csec = rs.AddEllipse(crosssectionplane, bend_radius, perp_radius)

@@ -9,7 +9,7 @@ def DistributeCirclesOnSphere():
     circle_radius = rs.GetReal("Radius of packing circles", 0.05*sphere_radius, 0.001, 0.5*sphere_radius)
     if not circle_radius: return
 
-    vertical_count = int( (math.pi*sphere_radius)/(2*circleradius) )
+    vertical_count = int( (math.pi*sphere_radius)/(2*circle_radius) )
 
     rs.EnableRedraw(False)
     phi = -0.5*math.pi
@@ -20,7 +20,7 @@ def DistributeCirclesOnSphere():
         theta = 0
         theta_step = 2*math.pi/horizontal_count
         while theta<2*math.pi-1e-8:
-            circle_center = (sphere_radius*math.cos(theta)*math.cos(phi), sphere_radius*math.sin(theta)*math.cos(phi), math.sin(phi))
+            circle_center = (sphere_radius*math.cos(theta)*math.cos(phi), sphere_radius*math.sin(theta)*math.cos(phi), sphere_radius*math.sin(phi))
             circle_normal = rs.PointSubtract(circle_center, (0,0,0))
             circle_plane = rs.PlaneFromNormal(circle_center, circle_normal)
             rs.AddCircle(circle_plane, circle_radius)
@@ -30,4 +30,4 @@ def DistributeCirclesOnSphere():
 
 
 if __name__=="__main__":
-    DistributeCircleOnSphere()
+    DistributeCirclesOnSphere()

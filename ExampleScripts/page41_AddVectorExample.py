@@ -17,7 +17,6 @@ def vectorfield():
             vecdir = rs.VectorUnitize(vecdir)
             vecdir = rs.VectorScale(vecdir, 2.0)
             AddVector(vecdir, point)
-        End If
 
 
 def AddVector(vecdir, base_point):

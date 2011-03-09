@@ -1,6 +1,5 @@
 ﻿import rhinoscriptsyntax as rs
 
-
 def planeexample():
     origin = rs.GetPoint("Plane origin")
     if not origin: return

@@ -17,13 +17,13 @@ import rhinoscriptsyntax as rs
 import scriptcontext
 import random
 
-Dim prop_MinTwigCount
-Dim prop_MaxTwigCount
-Dim prop_MaxGenerations
-Dim prop_MaxTwigLength
-Dim prop_LengthMutation
-Dim prop_MaxTwigAngle
-Dim prop_AngleMutation
+prop_MinTwigCount = 0
+prop_MaxTwigCount = 0
+prop_MaxGenerations = 0
+prop_MaxTwigLength = 0
+prop_LengthMutation = 0
+prop_MaxTwigAngle = 0
+prop_AngleMutation = 0
 
 def getsticky(name, default_value):
     name = "PlaneGenerator_"+name
@@ -107,12 +107,12 @@ def PlantGenerator():
 #-------------------------the code below appears in the primer--------------------------
 #---------------------------------------------------------------------------------------
 
-def RecursiveGrowth( ptStart, vecDir, Props, generation):
+def RecursiveGrowth( ptStart, vecDir, props, generation):
     minTwigCount, maxTwigCount, maxGenerations, maxTwigLength, lengthMutation, maxTwigAngle, angleMutation = props
     if generation>maxGenerations: return
 
     #Copy and mutate the growth-properties
-    Dim newProps : newProps = Props
+    newProps = props
     maxTwigLength *= lengthMutation
     maxTwigAngle *= angleMutation
     if maxTwigAngle>90: maxTwigAngle=90
@@ -133,7 +133,7 @@ def RandomPointInCone( origin, direction, minDistance, maxDistance, maxAngle):
     vecTwig = rs.VectorScale(vecTwig, minDistance + random.random()*(maxDistance-minDistance))
     MutationPlane = rs.PlaneFromNormal((0,0,0), vecTwig)
     vecTwig = rs.VectorRotate(vecTwig, random.random()*maxAngle, MutationPlane[1])
-    vecTwig = rs.VectorRotate(vecTwig, random.random()*360, Direction)
+    vecTwig = rs.VectorRotate(vecTwig, random.random()*360, direction)
     return rs.PointAdd(origin, vecTwig)
 
 
@@ -153,7 +153,7 @@ def AddArcDir( ptStart, ptEnd, vecDir):
     midLength = (0.5 * rs.Distance(ptStart, ptEnd)) / dotProd
     
     vecBisector = rs.VectorScale(vecBisector, midLength)
-    return rs.AddArc3Pt(ptStart, ptEnd, rs.PointAdd(ptStart, vecBisector))
+    return rs.AddArc3Pt(ptStart, rs.PointAdd(ptStart, vecBisector), ptEnd)
 
 
 if __name__=="__main__":
