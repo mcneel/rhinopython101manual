@@ -20,9 +20,11 @@ def smoothcurve(curve_id, s):
     curve_points = rs.CurvePoints(curve_id)
     new_curve_points = []
 
-    for i in range(len(curve_points)-1):
+    new_curve_points.append(curve_points[0])
+    for i in range(1, len(curve_points)-1):
         vm = smoothingvector(curve_points[i], curve_points[i-1], curve_points[i+1], s)
         new_curve_points.append( rs.PointAdd(curve_points[i], vm) )
+    new_curve_points.append(curve_points[-1])
 
     knots = rs.CurveKnots(curve_id)
     degree = rs.CurveDegree(curve_id)
