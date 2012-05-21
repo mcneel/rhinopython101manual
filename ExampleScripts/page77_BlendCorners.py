@@ -23,10 +23,10 @@ def blendcorners():
         if radius<(0.5*segmentlength):
             vec_segment = rs.VectorScale(vec_segment, radius)
         else:
-            vec_segment = rs.VectorScale(vec_segment, 0.5*segment_length)
+            vec_segment = rs.VectorScale(vec_segment, 0.5*segmentlength)
 
-        w1 = rs.VectorAdd(a, vec_segment)
-        w2 = rs.VectorSubtract(b, vec_segment)
+        w1 = rs.PointAdd(a, vec_segment)
+        w2 = rs.PointSubtract(b, vec_segment)
         newverts.append(a)
         newverts.append(between(a,w1))
         newverts.append(w1)
