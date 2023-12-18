@@ -6,8 +6,8 @@ def displayobjectattributes(object_id):
     data.append( "Object attributes for :"+str(object_id) )
     data.append( "Description: " + rs.ObjectDescription(object_id))
     data.append( "Layer: " + rs.ObjectLayer(object_id))
-    data.append( "LineType: " + rs.ObjectLineType(object_id))
-    data.append( "LineTypeSource: " + rs.ObjectLineTypeSource(object_id))
+    data.append( "LineType: " + rs.ObjectLinetype(object_id))
+    data.append( "LineTypeSource: " + str(rs.ObjectLinetypeSource(object_id)))
     data.append( "MaterialSource: " + str(rs.ObjectMaterialSource(object_id)))
     
     name = rs.ObjectName(object_id)

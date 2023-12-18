@@ -22,7 +22,7 @@ def geodesiccurve():
         length = newlength
 
     rs.AddPolyline(vertices)
-    print "Geodesic curve added with length: ", newlength
+    print("Geodesic curve added with length: ", newlength)
 
 
 def geodesicfit(vertices, surface_id, tolerance):

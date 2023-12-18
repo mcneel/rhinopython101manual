@@ -24,13 +24,13 @@ def ProximityAnalysis():
     rs.DeleteObject(mesh_id)
 
 
-def VertexValueArray(points, id):
-    def DistanceTo(pt, id):
-        ptCP = rs.BrepClosestPoint(id,pt)
+def VertexValueArray(points, obj_id):
+    def DistanceTo(pt, obj_id):
+        ptCP = rs.BrepClosestPoint(obj_id,pt)
         if ptCP:
             d = rs.Distance(pt, ptCP[0])
             return math.log(d+1)
-    return [DistanceTo(point, id) for point in points]
+    return [DistanceTo(point, obj_id) for point in points]
 
 
 

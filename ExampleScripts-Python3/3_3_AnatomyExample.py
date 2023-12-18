@@ -2,8 +2,8 @@
 
 def main():
     info = "This is just a test"
-    print info
-    print "I repeat: ", info
+    print(info)
+    print("I repeat: ", info)
 
 
 if __name__=="__main__":

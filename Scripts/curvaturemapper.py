@@ -5,18 +5,17 @@ def PrincipalCurvatureMapper():
     select = rs.GetSurfaceObject("Point on surface to start from", False, True)
     if not select: return
     if select[2]!=1:
-        print "You must pick on a surface for this to work"
+        print("You must pick on a surface for this to work")
         return
     srf_id = select[0]
     uvPt = select[4]
 
 
 	
-	Dim idSrf : idSrf = dSelect(0)
-	Dim uvPt : uvPt = dSelect(4)
+    idSrf = dSelect(0)
+    uvPt = dSelect(4)
 	
-	Dim uvPts() : ReDim uvPts(0) : uvPts(0) = uvPt
-	Dim i, nUVPt
+    uvPts[0] = uvPt
     uvPts = [uvPt]	
     for i in range(10000):
         nUVPt = MapCurvatureStep(srf_id, upPts[i], True, True, 0.1)

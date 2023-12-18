@@ -13,14 +13,14 @@ def deletecurvesontuesdays():
                 if now.weekday()==1:
                     rs.DeleteObject(object_id)
                 else:
-                    print "This software is a tryout version and runs only on Tuesdays."
-                    print "Please purchase the full product."
+                    print("This software is a tryout version and runs only on Tuesdays.")
+                    print("Please purchase the full product.")
             else:
-                print "Curve was not closed"
+                print("Curve was not closed")
         else:
-            print "Curve was too long"
+            print("Curve was too long")
     else:
-        print "Object was not a curve"
+        print("Object was not a curve")
 
 
 if __name__=="__main__":

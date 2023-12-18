@@ -132,7 +132,7 @@ def RandomPointInCone( origin, direction, minDistance, maxDistance, maxAngle):
     vecTwig = rs.VectorUnitize(direction)
     vecTwig = rs.VectorScale(vecTwig, minDistance + random.random()*(maxDistance-minDistance))
     MutationPlane = rs.PlaneFromNormal((0,0,0), vecTwig)
-    vecTwig = rs.VectorRotate(vecTwig, random.random()*maxAngle, MutationPlane[1])
+    vecTwig = rs.VectorRotate(vecTwig, random.random()*maxAngle, MutationPlane.XAxis)
     vecTwig = rs.VectorRotate(vecTwig, random.random()*360, direction)
     return rs.PointAdd(origin, vecTwig)
 

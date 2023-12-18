@@ -6,7 +6,7 @@ def pointspiral():
     t = -5
     while t<=5:
         point = t*math.sin(5*t), t*math.cos(5*t), t
-        print point
+        print(point)
         rs.AddPoint(point)
         t+=0.025
 

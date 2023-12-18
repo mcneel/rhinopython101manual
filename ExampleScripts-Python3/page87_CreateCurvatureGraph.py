@@ -35,7 +35,7 @@ def addcurvaturegraph( idCrv, spansamples, scale):
     allGeometry = []
     knots = rs.CurveKnots(idCrv)
     p=5
-    for i in range(knots.Count -1):
+    for i in range(len(knots)-1):
         tmpGeometry = addcurvaturegraphsection(idCrv, knots[i], knots[i+1], spansamples, scale)
         if tmpGeometry: allGeometry.append(tmpGeometry)
     rs.AddObjectsToGroup(allGeometry, rs.AddGroup())

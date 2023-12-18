@@ -15,10 +15,10 @@ def fitcurvetolength():
         if rs.CurveLength(curve_id)<=length_limit: break
         curve_id = rs.ScaleObject(curve_id, (0,0,0), (0.95, 0.95, 0.95))
         if curve_id is None:
-            print "Something went wrong..."
+            print("Something went wrong...")
             return
 
-    print "New curve length: ", rs.CurveLength(curve_id)
+    print("New curve length: ", rs.CurveLength(curve_id))
 
 
 if __name__=="__main__":

@@ -12,7 +12,6 @@ def main():
     for point in points: evaluatedeviation(surface_id, 1.0, point)
     rs.EnableRedraw(True)
 
-
 def evaluatedeviation( surface_id, threshold, sample ):
     r2point = rs.SurfaceClosestPoint(surface_id, sample)
     if not r2point: return
@@ -25,7 +24,6 @@ def evaluatedeviation( surface_id, threshold, sample ):
 
     rs.AddPoint(sample)
     rs.AddLine(sample, r3point)
-
 
 if __name__=="__main__":
     main()

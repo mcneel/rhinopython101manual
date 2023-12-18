@@ -6,7 +6,8 @@ def myfavoritethings():
 
     while True:
         count = len(things)
-        prompt = "What is your %dth most favorite thing?" % count+1
+        prompt = "What is your {}th most favorite thing?".format(count+1)
+
         if len(things)==0:
             prompt = "What is your most favorite thing?"
         elif count==1:
@@ -19,8 +20,8 @@ def myfavoritethings():
         things.append(answer)
     if len(things)==0: return
 
-    print "Your", len(things)+1, "favorite things are:"
-    for i,thing in enumerate(things): print i+1, ".", thing
+    print("Your", len(things)+1, "favorite things are:")
+    for i,thing in enumerate(things): print(i+1, ".", thing)
 
 
 if __name__=="__main__":

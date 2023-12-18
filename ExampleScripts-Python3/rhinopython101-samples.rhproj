@@ -1,0 +1,23 @@
+{
+  "id": "03e167bb-4646-4ccb-a97f-65e1613e57a1",
+  "identity": {
+    "name": "rhinopython101-samples",
+    "version": "0.1"
+  },
+  "settings": {
+    "buildPath": "build/",
+    "buildTarget": {
+      "appName": "Rhino3D",
+      "appVersion": {
+        "major": 8,
+        "minor": 0
+      },
+      "title": "Rhino3D (8.0)",
+      "slug": "rh8_0"
+    },
+    "publishTarget": {
+      "title": "McNeel Yak Server"
+    }
+  },
+  "codes": []
+}

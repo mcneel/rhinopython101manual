@@ -1,6 +1,6 @@
-﻿import rhinoscriptsyntax as rs
+import rhinoscriptsyntax as rs
 import math
-
+import random
 
 def meshfunction_xy():
     zfunc, domain, resolution = loadfunctiondata()
@@ -42,11 +42,14 @@ def loadfunctiondata():
 
 
 def solveequation( function, x, y ):
-    d = rs.Hypot(x,y)
+    d = 10
     angledata = rs.Angle( (0,0,0), (x,y,0))
     a = 0.0
-    if angledata: a = math.radians(angledata[0])
-    z = eval(function)
+    if angledata: a = angledata[0] * math.pi/180
+    try:
+        z = eval(function)
+    except:
+        z = 0
     return z
 
 
